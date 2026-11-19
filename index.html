@@ -1078,15 +1078,15 @@ function skillH(tags){const L=Object.entries(tags||{}).filter(([g,v])=>v[1]>0&&T
 /* ---------- student: exit tickets ---------- */
 const XS={};
 async function openXt(){const u=AUTH.u;if(!u||!AUTH.prof?.sid){toast("เข้าสู่ระบบและยืนยันรหัสนิสิตก่อน");return}
- openSheet(`<div class="sh"><h2>📝 Exit ticket</h2><button onclick="closeSheet()">ปิด</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
- let op={},mine={};try{op=(await DB.ref("xt/open").once("value")).val()||{};mine=(await DB.ref("portfolio/"+u.uid).once("value")).val()||{}}catch(e){}
+ openSheet(`<div class="sh"><h2>🎮 เกมและ Exit ticket</h2><button onclick="closeSheet()">ปิด</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
+ let op={},mine={};try{op=(await DB.ref("xt/open").once("value")).val()||{};mine=(await DB.ref("portfolio/"+u.uid).once("value")).val()||{};XROOM=(await DB.ref("xt/room").once("value")).val()||{}}catch(e){}
  const g2=mine.g2,gRow=(op.g2===true||g2)?`<div class="xtr"><div><b>🎮 บทที่ 2 · Manifesto Match</b> SCI Beacon${g2?`<div class="muted" style="font-size:13px">เล่นแล้ว ถูก ${g2.ok}/12 · ${new Date(g2.at).toLocaleString("th-TH")}</div>`:""}</div>${g2?`<button data-mmv="1">ดูผล</button>`:`<button class="pri" data-mmp="1">เล่น</button>`}</div>`:"";
  const g3=mine.g3,gRow3=(op.g3===true||g3)?`<div class="xtr"><div><b>🛡️ บทที่ 3 · Scope Guard</b> SCI Beacon${g3?`<div class="muted" style="font-size:13px">เล่นแล้ว ได้ ${g3.ok}/30 · ${new Date(g3.at).toLocaleString("th-TH")}</div>`:""}</div>${g3?`<button data-sgv="1">ดูผล</button>`:`<button class="pri" data-sgp="1">เล่น</button>`}</div>`:"";
  const s3=mine.s3,gRowS=(op.s3===true||s3?.at)?`<div class="xtr"><div><b>🏪 บทที่ 3 · Scope Market</b> เกมทีม<div class="muted" style="font-size:13px">${s3?.at?`ทีม ${esc(s3.team)} ได้ ${s3.tot} คะแนน · ${new Date(s3.at).toLocaleString("th-TH")}`:"ทีมใช้เครื่องเดียว · คนหนึ่งเล่นและส่งผลแทนทีม"}</div></div>${s3?.at?`<button data-smp="1">ดูผล</button>`:`<button class="pri" data-smp="1">เล่น</button>`}</div>`:"";
  const w3=mine.w3,gRowW=(op.w3===true||w3?.at)?`<div class="xtr"><div><b>🧩 บทที่ 3 · Workshop SCIBeacon รุ่นที่ 2</b> ใบงานทีม<div class="muted" style="font-size:13px">${w3?.sub?`ส่งแล้ว ${new Date(w3.sub).toLocaleString("th-TH")}`:w3?.at?"บันทึกร่างไว้แล้ว ยังไม่ได้ส่ง":"ทีมละ 1 ชุด · ผู้จดบันทึกส่งคนเดียว"}</div></div><button class="${w3?.sub?"":"pri"}" data-w3p="1">${w3?.sub?"เปิดดู":"เริ่มทำ"}</button></div>`:"";
- const rows=lvRows(op,mine)+gRow+gRow3+gRowS+gRowW+Object.keys(CH_T).map(Number).filter(c=>op[c]===true||mine["x"+c]).map(c=>{const x=mine["x"+c];return`<div class="xtr"><div><b>บทที่ ${c}</b> ${esc(CH_T[c])}${x?`<div class="muted" style="font-size:13px">ทำแล้ว ถูก ${x.ok}/${x.n} · ${new Date(x.at).toLocaleString("th-TH")}</div>`:""}</div>${x?(op[c]===true?`<span class="pill">✓ ส่งแล้ว</span>`:`<button data-xr="${c}">ดูเฉลย</button>`):`<button class="pri" data-xt="${c}">เริ่มทำ</button>`}</div>`}).join("");
- openSheet(`<div class="sh"><h2>📝 Exit ticket</h2><button onclick="closeSheet()">ปิด</button></div><p class="muted" style="margin-top:0">ทำคนเดียว 5 ข้อ ส่งได้ครั้งเดียว ระบบตรวจทันทีและบันทึกลงแฟ้มสะสมงาน</p>${rows||`<p class="muted">ตอนนี้ยังไม่มี Exit ticket ที่อาจารย์เปิดไว้</p>`}`);
- document.querySelectorAll("[data-xt]").forEach(b=>b.onclick=()=>takeXt(+b.dataset.xt));document.querySelectorAll("[data-xr]").forEach(b=>b.onclick=()=>reviewXt(+b.dataset.xr));document.querySelectorAll("[data-lvp]").forEach(b=>b.onclick=()=>openLv(+b.dataset.lvp));
+ const rows=teamRoomRows(op)+lvRows(op,mine)+gRow+gRow3+gRowS+gRowW+Object.keys(CH_T).map(Number).filter(c=>op[c]===true||mine["x"+c]).map(c=>{const x=mine["x"+c];return`<div class="xtr"><div><b>บทที่ ${c}</b> ${esc(CH_T[c])}${x?`<div class="muted" style="font-size:13px">ทำแล้ว ถูก ${x.ok}/${x.n} · ${new Date(x.at).toLocaleString("th-TH")}</div>`:""}</div>${x?(op[c]===true?`<span class="pill">✓ ส่งแล้ว</span>`:`<button data-xr="${c}">ดูเฉลย</button>`):`<button class="pri" data-xt="${c}">เริ่มทำ</button>`}</div>`}).join("");
+ openSheet(`<div class="sh"><h2>🎮 เกมและ Exit ticket</h2><button onclick="closeSheet()">ปิด</button></div><p class="muted" style="margin-top:0">กิจกรรมที่อาจารย์เปิดไว้ · คะแนนบันทึกลงแฟ้มสะสมงานอัตโนมัติ</p>${rows||`<p class="muted">ตอนนี้ยังไม่มีกิจกรรมที่อาจารย์เปิดไว้</p>`}`);
+ document.querySelectorAll("[data-xt]").forEach(b=>b.onclick=()=>takeXt(+b.dataset.xt));document.querySelectorAll("[data-xr]").forEach(b=>b.onclick=()=>reviewXt(+b.dataset.xr));document.querySelectorAll("[data-lvp]").forEach(b=>b.onclick=()=>openLv(+b.dataset.lvp));document.querySelectorAll("[data-room]").forEach(b=>b.onclick=()=>{closeSheet();joinClass(b.dataset.room,false)});
  document.querySelector("[data-mmp]")&&(document.querySelector("[data-mmp]").onclick=openMM);document.querySelector("[data-mmv]")&&(document.querySelector("[data-mmv]").onclick=()=>mmResult(g2));document.querySelector("[data-sgp]")&&(document.querySelector("[data-sgp]").onclick=openSG);document.querySelector("[data-sgv]")&&(document.querySelector("[data-sgv]").onclick=()=>sgResult(g3));document.querySelector("[data-w3p]")&&(document.querySelector("[data-w3p]").onclick=()=>openW3());document.querySelector("[data-smp]")&&(document.querySelector("[data-smp]").onclick=()=>openSM())}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 async function fnCall(name,data){if(!FN)throw new Error("ยังไม่ได้เชื่อมต่อระบบตรวจคำตอบ กรุณารีเฟรชหน้าเว็บ");
@@ -1279,7 +1279,7 @@ async function xtPreview(c,back){const bk=back===openDemoHub?"openDemoHub()":"op
 /* ---------- เกมรายบท (แทนหน้าจัดการเดิม) ---------- */
 async function openXtAdmin(ch){if(ch)THV.ch=ch;store.set("sq.thch",THV.ch);const c=THV.ch;
  openSheet(`<div class="sh"><h2>🗂️ เกมรายบท</h2><button onclick="closeSheet()">ปิด</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
- let op={},pf={};try{op=(await DB.ref("xt/open").once("value")).val()||{};pf=(await DB.ref("portfolio").once("value")).val()||{}}catch(e){toast("อ่านข้อมูลไม่ได้ ตรวจสิทธิ์อาจารย์")}
+ let op={},pf={},room={};try{op=(await DB.ref("xt/open").once("value")).val()||{};room=(await DB.ref("xt/room").once("value")).val()||{};pf=(await DB.ref("portfolio").once("value")).val()||{}}catch(e){toast("อ่านข้อมูลไม่ได้ ตรวจสิทธิ์อาจารย์")}
  const P=Object.values(pf);const cnt=k=>P.filter(p=>p&&p[k]).length;
  const stat=k=>{const n=cnt(k);if(!n)return"ยังไม่มีผล";
   if(/^\d+$/.test(k)){const a=P.filter(p=>p?.["x"+k]).map(p=>p["x"+k]);return`ส่ง ${a.length} คน · เฉลี่ย ${Math.round(100*a.reduce((s,x)=>s+x.ok/x.n,0)/a.length)}%`}
@@ -1290,13 +1290,14 @@ async function openXtAdmin(ch){if(ch)THV.ch=ch;store.set("sq.thch",THV.ch);const
  const sw=k=>{const on=op[k]===true;return`<button class="${on?"":"pri"}" data-tg="${k}">${on?"ปิด":"เปิด"}</button>`};
  const state=k=>op[k]===true?`<span class="dot on"></span>เปิดอยู่`:op[k]===false?`<span class="dot"></span>ปิดแล้ว`:`<span class="dot"></span>ยังไม่เคยเปิด`;
  const games=(CH_GAMES[c]||[]).map((g,i)=>g.type==="team"&&/^c\d$/.test(g.k)
-  ?`<div class="hrow"><div class="nm"><b>${g.ic} ${esc(g.t)}<span class="tag">ทีม</span></b><small>เล่นในห้องเรียน · เลือกโมดูลบทที่ ${c} หลังกดเริ่มคาบ</small></div><div class="acts"><button data-gd="${i}">ทดลอง</button></div></div>`
+  ?`<div class="hrow"><div class="nm"><b>${g.ic} ${esc(g.t)}<span class="tag">เดี่ยว/ทีม</span></b><small>${state(g.k)} · ${cnt(g.k)?`เล่นแล้ว ${cnt(g.k)} คน`:"ยังไม่มีผล"}${room[g.k]?` · ห้อง ${esc(room[g.k])}`:""}</small></div><div class="acts"><button class="ghost" data-gd="${i}" aria-label="ทดลอง">▶</button>${room[g.k]?`<button class="ghost" data-rm="${g.k}">คุมห้อง</button>`:""}${sw(g.k)}</div></div>`
   :`<div class="hrow"><div class="nm"><b>${g.ic} ${esc(g.t)}<span class="tag">${TYPE_T[g.type]}</span></b><small>${state(g.k)} · ${stat(g.k)}</small></div><div class="acts"><button class="ghost" data-gd="${i}" aria-label="ทดลอง">▶</button>${g.res?`<button class="ghost" data-gr="${i}">${g.resT}</button>`:""}${sw(g.k)}</div></div>`).join("");
  const ev=c===4?`<div class="hrow"><div class="nm"><b>🃏 การ์ดเหตุการณ์</b><small>ส่งระหว่างเล่น “แข่งกับเวลา”</small></div><div class="acts"><button class="ghost" data-ev="sick">ป่วย</button><button class="ghost" data-ev="early">เลื่อนสอบ</button></div></div>`:"";
  const xt=`<div class="hrow"><div class="nm"><b>📝 Exit ticket<span class="tag">5 ข้อ</span></b><small>${state(String(c))} · ${stat(String(c))}</small></div><div class="acts"><button class="ghost" data-xp="1">ดูข้อ</button>${sw(String(c))}</div></div>`;
  const tabs=Object.keys(CH_T).map(Number).map(n=>{const live=(CH_GAMES[n]||[]).some(g=>op[g.k]===true)||op[n]===true;return`<button data-ch="${n}" aria-pressed="${n===c}" class="${CH_GAMES[n]?"has":""}">${live?"● ":""}${n}</button>`}).join("");
  openSheet(`<div class="sh"><h2>🗂️ เกมรายบท</h2><button onclick="closeSheet()">ปิด</button></div>
  <div class="chtabs" role="tablist">${tabs}</div>
+ ${BULK.every(k=>op[k]===true)?"":`<button class="ghost" id="bBulk" style="width:100%;margin-bottom:8px">⚡ เปิดทุกเกมบทที่ 1–4 ให้นิสิตเล่น</button>`}
  <h3 style="margin:2px 0 4px">บทที่ ${c} · ${esc(CH_T[c]||"")}</h3>
  ${games}${ev}${xt}
  ${CH_GAMES[c]?"":`<p class="muted" style="font-size:13px">บทนี้ยังไม่มีเกม คะแนนคิดจากใบงานและ Exit ticket</p>`}
@@ -1311,7 +1312,9 @@ async function openXtAdmin(ch){if(ch)THV.ch=ch;store.set("sq.thch",THV.ch);const
  document.querySelectorAll("[data-tg]").forEach(b=>b.onclick=async()=>{const k=b.dataset.tg;const on=op[k]!==true;
   const nm=/^\d+$/.test(k)?`Exit ticket บทที่ ${k}`:((CH_GAMES[c]||[]).find(g=>g.k===k)?.t||k);
   if(!on&&/^\d+$/.test(k)&&!confirmClose(k,xcnt(k)))return;
-  try{await DB.ref("xt/open/"+(/^\d+$/.test(k)?+k:k)).set(on);toast(on?`เปิด${nm}แล้ว`:`ปิด${nm}แล้ว`);openXtAdmin()}catch(e){toast("บันทึกไม่ได้ ต้องเป็นบัญชีอาจารย์")}});
+  try{if(on&&ROOM_CFG[k])await ensureRoom(k);await DB.ref("xt/open/"+(/^\d+$/.test(k)?+k:k)).set(on);toast(on?`เปิด${nm}แล้ว`:`ปิด${nm}แล้ว`);openXtAdmin()}catch(e){toast("บันทึกไม่ได้ ต้องเป็นบัญชีอาจารย์")}});
+ document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{closeSheet();joinClass(room[b.dataset.rm],true)});
+ $("bBulk")&&($("bBulk").onclick=async()=>{const b=$("bBulk");b.disabled=true;b.textContent="กำลังเปิด…";try{for(const k of BULK){if(ROOM_CFG[k])await ensureRoom(k);await DB.ref("xt/open/"+k).set(true)}toast("เปิดทุกเกมบทที่ 1–4 แล้ว");openXtAdmin()}catch(e){toast("เปิดไม่สำเร็จ ต้องเป็นบัญชีอาจารย์");b.disabled=false}});
  document.querySelectorAll("[data-ev]").forEach(b=>b.onclick=async()=>{try{await DB.ref("xt/ev").set({id:Date.now(),k:b.dataset.ev});toast("ส่งการ์ดแล้ว ผู้ที่กำลังเล่นจะได้รับในรอบถัดไป")}catch(e){toast("ส่งไม่ได้")}});
  lvAdmBind()}
 function confirmClose(k,n){return true}
@@ -1384,6 +1387,17 @@ function renderClassLobby(app){const teams=Object.values(teamsNow()).map(t=>t.g)
  $("bTeamOpt").onclick=()=>{CL_TEAM=!CL_TEAM;render();setTimeout(()=>$("tm")&&$("tm").focus(),50)};
  $("bCT")&&($("bCT").onclick=()=>createTeam($("tm").value.trim()));
  $("tm")&&($("tm").onkeydown=e=>{if(e.key==="Enter")$("bCT").click()})}
+
+/* ---------- ห้องเล่นถาวรของเกมทีม: นิสิตเข้าเล่นจากหน้า /student ได้ทุกเมื่อ เลือกเดี่ยวหรือทีม ---------- */
+const ROOM_CFG={c1:{mod:"sq",mode:"basic"},c4:{mod:"cpm"},c6:{mod:"sq",mode:"scrum"}};
+const BULK=["c1","g2","g3","s3","w3","c4","l3"];
+let XROOM={};
+async function ensureRoom(k){let code=(await DB.ref("xt/room/"+k).once("value")).val();
+ if(code&&(await DB.ref(`classes/${code}/cls`).once("value")).exists())return code;
+ code=genCode(5);await DB.ref(`classes/${code}/cls`).set({code,tk:ME.k,gate:4,lock:false,paused:false,endAt:0,dur:12,msg:"",ev:{id:0,i:-1},final:false,created:now(),perm:k,...ROOM_CFG[k]});
+ await DB.ref("xt/room/"+k).set(code);return code}
+function teamRoomRows(op){return["c1","c4","c6"].filter(k=>op[k]===true&&XROOM[k]).map(k=>{const ch={c1:1,c4:4,c6:6}[k],g=CH_GAMES[ch].find(x=>x.k===k);
+ return`<div class="xtr"><div><b>${g.ic} บทที่ ${ch} · ${esc(g.t)}</b><div class="muted" style="font-size:13px">เล่นเดี่ยวหรือเป็นทีม · เล่นต่อจากเดิมได้</div></div><button class="pri" data-room="${esc(XROOM[k])}">เล่น</button></div>`}).join("")}
 
 /* ---------- teacher: roster · chapter scores · grade path ---------- */
 const RO={tab:"sum",ch:4,C:null};
