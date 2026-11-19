@@ -755,7 +755,7 @@ function wireCp(app){wire0(app);wireCpBar();$("bPf2")&&($("bPf2").onclick=openPf
 function wire0(app){app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const x=b.dataset.x;act(b.dataset.a,x==null?undefined:(isNaN(+x)?x:+x))})}
 
 /* ---------- teacher: module chooser, CPM table, CSV ---------- */
-function modCardH(c){const k=teacherModKey(c);return`<div class="card col"><h2>โมดูลประจำสัปดาห์</h2><div class="mods">${MODS.map(m=>{const on=m.ind?XTOP[m.ind]===true:(m.id==="cpm"&&k==="cpm")||(m.id==="sq"&&(k==="sq"||k==="sqfree"))||(m.id==="scrum"&&k==="scrum");return`<button data-mod="${m.id}" aria-pressed="${on}"${m.ok?"":" disabled"}><span class="mch">บทที่ ${m.ch}</span><b>${esc(m.t)}</b><small>${m.ok?(m.ind&&XTOP[m.ind]===true?"🟢 เปิดให้เล่นอยู่ · ":"")+esc(m.d):"กำลังพัฒนา"}</small></button>`}).join("")}</div>
+function modCardH(c){const k=teacherModKey(c);return`<div class="card col"><h2>โมดูลประจำสัปดาห์</h2><div class="mods">${MODS.filter(m=>m.ok).map(m=>{const on=m.ind?XTOP[m.ind]===true:(m.id==="cpm"&&k==="cpm")||(m.id==="sq"&&(k==="sq"||k==="sqfree"))||(m.id==="scrum"&&k==="scrum");return`<button data-mod="${m.id}" aria-pressed="${on}"${m.ok?"":" disabled"}><span class="mch">บทที่ ${m.ch}</span><b>${esc(m.t)}</b><small>${m.ok?(m.ind&&XTOP[m.ind]===true?"🟢 เปิดให้เล่นอยู่ · ":"")+esc(m.d):"กำลังพัฒนา"}</small></button>`}).join("")}</div>
  <div class="row">${k==="cpm"?`<button class="pri" id="tTeach">📽 โหมดสอน (SCIBeacon)</button><button id="tKeys">🖨 เฉลยใบงานทุกทีม</button><button id="tCsv">⬇ คะแนนบทที่ 4 (CSV)</button>`:""}<button id="tDemo">🖥 ทดลองเล่นแบบเครื่องเดียว</button></div><div class="muted" style="font-size:13px">เปลี่ยนโมดูลแล้วนิสิตทุกทีมจะเห็นเกมของบทนั้นทันที ข้อมูลบทอื่นยังอยู่ในแฟ้มสะสมงาน · ปุ่มสาธิตเปิดในแท็บใหม่</div></div>`}
 function wireModCard(app){$("tRoster")&&($("tRoster").onclick=openRoster);$("tXtAdm")&&($("tXtAdm").onclick=openXtAdmin);$("tTeach")&&($("tTeach").onclick=startTeach);$("tKeys")&&($("tKeys").onclick=printAllKeys);try{xtWatch()}catch(e){}app.querySelectorAll("[data-mod]").forEach(b=>b.onclick=async()=>{const m=MODS.find(x=>x.id===b.dataset.mod);if(!m)return;if(m.ind){openIndGame(m.ind);return}const patch=m.id==="cpm"?{mod:"cpm"}:{mod:"sq",mode:m.mode};await tSet(patch);CLS={...CLS,...patch};tNudgeAll()});
  $("tDemo")&&($("tDemo").onclick=()=>{const k=teacherModKey(MYCLS);window.open(location.pathname+"?demo="+(k==="cpm"?"cpm":"sq"),"_blank")});
@@ -1128,7 +1128,7 @@ async function openMyPf(){const u=AUTH.u;if(!u)return;openSheet(`<div class="sh"
  <div class="row" style="margin-top:10px"><button class="pri" onclick="openGap()">📊 เส้นทางสู่เกรด</button><button onclick="openXt()">📝 Exit ticket</button></div>`)}
 
 /* ---------- teacher: exit-ticket control ---------- */
-async function openXtAdmin(){openSheet(`<div class="sh"><h2>📝 จัดการ Exit ticket</h2><button onclick="closeSheet()">ปิด</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
+async function openXtAdminOld(){openSheet(`<div class="sh"><h2>📝 จัดการ Exit ticket</h2><button onclick="closeSheet()">ปิด</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
  let op={},pf={};try{op=(await DB.ref("xt/open").once("value")).val()||{};pf=(await DB.ref("portfolio").once("value")).val()||{}}catch(e){toast("อ่านข้อมูลไม่ได้ ตรวจสิทธิ์อาจารย์")}
  const st=c=>{let n=0,s=0;for(const u in pf){const x=pf[u]?.["x"+c];if(x){n++;s+=x.ok/x.n}}return n?`ส่งแล้ว ${n} คน · เฉลี่ย ${Math.round(100*s/n)}%`:"ยังไม่มีผู้ส่ง"};
  openSheet(`<div class="sh"><h2>📝 จัดการ Exit ticket</h2><button onclick="closeSheet()">ปิด</button></div><p class="muted" style="margin-top:0">เปิดเมื่อจบคาบ แล้วปิดเมื่อหมดเวลา นิสิตส่งได้คนละครั้ง บทที่เคยเปิดจะนับเป็นบทที่เก็บคะแนน ผู้ที่ไม่ส่งได้ 0 ในส่วนนี้</p>
@@ -1181,6 +1181,185 @@ function lvAdmBind(){document.querySelectorAll("[data-lvp]").forEach(b=>b.onclic
  document.querySelectorAll("[data-lve]").forEach(b=>b.onclick=async()=>{try{await DB.ref("xt/ev").set({id:Date.now(),k:b.dataset.lve});toast("ส่งการ์ดเหตุการณ์แล้ว");openXtAdmin()}catch(e){toast("ส่งไม่ได้ ต้องเป็นบัญชีอาจารย์")}});
  $("bXtAna")&&($("bXtAna").onclick=async()=>{const b=$("bXtAna");b.disabled=true;b.textContent="กำลังวิเคราะห์…";try{const r=await fnCall("analyzeItems",{});const n=Object.values(r).reduce((a,c)=>a+Object.values(c).filter(x=>x.n).length,0);toast(`วิเคราะห์แล้ว ${n} ข้อ กด "ดูข้อ" เพื่อดูผลรายข้อ`)}catch(e){toast(e.message)}b.disabled=false;b.textContent="📊 วิเคราะห์ข้อสอบทุกบท"});
  $("bXtLegacy")&&($("bXtLegacy").onclick=async()=>{try{const r=await fnCall("importLegacyXt",{});toast(`นำเข้าผลแบบเดิม ${r.imported} รายการ`)}catch(e){toast(e.message)}})}
+
+/* ================= v19: แผงอาจารย์ · ห้องทดลองเล่น · เกมรายบท · หน้าเตรียมเกมทีมแบบทีละขั้น ================= */
+(function(){if(document.getElementById("v19css"))return;const st=document.createElement("style");st.id="v19css";st.textContent=`
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:16px 14px;min-height:96px;text-align:left;border-radius:14px;font-size:17px;font-weight:700;line-height:1.25}
+.tile .ic{font-size:26px;line-height:1}
+.tile small{font-size:12.5px;font-weight:400;color:var(--muted,#6b7785)}
+.tile.pri small{color:rgba(255,255,255,.85)}
+.hrow{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line,#e3e8ee)}
+.hrow:last-child{border-bottom:0}
+.hrow .nm{flex:1;min-width:0}
+.hrow .nm b{display:block;font-size:15.5px}
+.hrow .nm small{font-size:12.5px;color:var(--muted,#6b7785)}
+.hrow .acts{display:flex;gap:6px;flex-shrink:0}
+.hrow .acts button{padding:8px 12px;min-height:40px}
+.chtabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.chtabs button{flex-shrink:0;min-width:46px;padding:8px 10px;border-radius:999px}
+.chtabs button[aria-pressed=true]{background:var(--accent,#1f6fbf);color:#fff;border-color:transparent}
+.chtabs button.has{font-weight:700}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:1px;background:#b8c1cc}
+.dot.on{background:#2e9e5b}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:999px;background:var(--chip,#eef2f6);color:var(--muted,#6b7785);margin-left:4px;font-weight:500;vertical-align:1px}
+.wzs{display:flex;gap:6px;margin:4px 0 2px}
+.wzs button{flex:1;padding:8px 4px;border-radius:999px;font-size:14px}
+.wzs button[aria-current=step]{background:var(--accent,#1f6fbf);color:#fff;border-color:transparent}
+.wzs button.done{border-color:#2e9e5b;color:#2e9e5b}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pgrid button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;min-height:96px;border-radius:14px;font-size:13.5px;line-height:1.25;text-align:center}
+.pgrid button .ic{font-size:30px;line-height:1}
+.pgrid button[aria-pressed=true]{border:2px solid var(--accent,#1f6fbf);background:var(--accent-soft,#e8f1fb)}
+.pgrid button:disabled{opacity:.45}
+.rpick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rpick button{padding:12px 8px;border-radius:12px;font-size:14.5px;line-height:1.25}
+.rpick button small{display:block;font-size:12px;color:var(--muted,#6b7785);font-weight:400}
+.rpick button[aria-pressed=true]{border:2px solid var(--accent,#1f6fbf);background:var(--accent-soft,#e8f1fb)}
+.rlist .rl{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line,#e3e8ee)}
+.rlist .rl:last-child{border-bottom:0}
+.rlist .rl button{padding:6px 12px;min-height:36px;border-radius:999px;font-size:14px}
+.wznav{display:flex;gap:8px}.wznav button{flex:1}
+.bigdice{font-size:18px}
+`;document.head.appendChild(st)})();
+
+const THV={ch:Number(store.get("sq.thch"))||4};
+const CH_GAMES={
+ 1:[{k:"c1",t:"Sprint Quest",ic:"🏃",type:"team",demo:()=>demoSq(0)}],
+ 2:[{k:"g2",t:"Manifesto Match",ic:"🧩",type:"ind",demo:()=>openMM(true)}],
+ 3:[{k:"s3",t:"Scope Market",ic:"🏪",type:"team",demo:()=>openSM(true),res:()=>smClass(),resT:"ผลทีม"},
+    {k:"g3",t:"Scope Guard",ic:"🛡️",type:"ind",demo:()=>openSG(true),res:()=>sgClass(),resT:"สรุปคำตอบ"},
+    {k:"w3",t:"Workshop รุ่นที่ 2",ic:"📝",type:"ws",demo:()=>openW3(true),res:()=>w3Class(),resT:"ตรวจใบงาน"}],
+ 4:[{k:"c4",t:"Critical Path Rush",ic:"⏱️",type:"team",demo:()=>startDemo("cpm")},
+    {k:"l3",t:"แข่งกับเวลา",ic:"🎯",type:"ind",demo:()=>openLv(3)}],
+ 6:[{k:"c6",t:"Sprint Quest · Scrum",ic:"🔁",type:"team",demo:()=>demoSq(1)}],
+};
+const TYPE_T={team:"ทีม",ind:"รายบุคคล",ws:"ใบงานทีม"};
+function demoSq(scrum){closeSheet();startDemo("sq");if(scrum){try{G=reduce(G,{a:"mode",x:1},G.pl[0]||ME);render()}catch(e){}}}
+
+/* ---------- หน้าแรกของอาจารย์ ---------- */
+function renderTHome(app){const u=AUTH.u,last=store.get("sq.lastcls")||"";
+ app.innerHTML=`<div class="hero" style="padding-bottom:6px"><div class="brand">${logoH(40)}<div><b>Sprint Quest</b><small>0214343 การจัดการโครงการดิจิทัล</small></div></div></div>
+ <div class="card row" style="justify-content:space-between;align-items:center"><div><b>${esc(u?.displayName||"อาจารย์")}</b> <span class="tag">อาจารย์</span>${last?`<div class="muted" style="font-size:13px">ห้องล่าสุด ${esc(last)}</div>`:""}</div><button class="ghost" id="tOut">ออกจากระบบ</button></div>
+ <div class="tgrid" style="margin-top:12px">
+  <button class="tile pri" id="tStart"><span class="ic">▶️</span>เริ่มคาบ<small>สร้างห้อง ให้นิสิตใส่รหัส</small></button>
+  <button class="tile" id="tDemo"><span class="ic">🎮</span>ทดลองเล่น<small>ทุกเกม ไม่บันทึกคะแนน</small></button>
+  <button class="tile" id="tCh"><span class="ic">🗂️</span>เกมรายบท<small>เปิด–ปิด ดูผล</small></button>
+  <button class="tile" id="tScore"><span class="ic">📊</span>คะแนน<small>รายชื่อ คะแนน เกรด</small></button>
+ </div>
+ <p class="muted" style="font-size:13px;text-align:center;margin-top:12px">${FBOK?(CONN?"🟢 เชื่อมต่อแล้ว":`<span class="wait"></span> กำลังเชื่อมต่อ…`):"⚠️ ออฟไลน์"}</p>`;
+ $("tOut").onclick=()=>signOutNow();$("tStart").onclick=openStartClass;$("tDemo").onclick=openDemoHub;$("tCh").onclick=()=>openXtAdmin();$("tScore").onclick=openRoster}
+
+function openStartClass(){const last=store.get("sq.lastcls")||"";
+ openSheet(`<div class="sh"><h2>▶️ เริ่มคาบ</h2><button onclick="closeSheet()">ปิด</button></div>
+ <button class="pri big" id="scNew">สร้างห้องใหม่</button>
+ <div class="row" style="gap:8px;margin-top:14px"><input id="scCode" class="code-in" maxlength="5" placeholder="รหัสห้องเดิม" value="${esc(last)}" autocomplete="off" style="flex:1"><button class="big" id="scBack">กลับห้องเดิม</button></div>`);
+ const go=(c,neu)=>{ME.n=ME.n||(AUTH.u?.displayName||"อาจารย์").split(" ")[0].slice(0,14)||"อาจารย์";store.set("sq.me",ME);closeSheet();joinClass(c,true)};
+ $("scNew").onclick=()=>go(genCode(5),true);
+ $("scBack").onclick=()=>{const c=$("scCode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");if(c.length!==5){toast("รหัสห้องมี 5 ตัว");return}go(c,false)}}
+
+/* ---------- ห้องทดลองเล่น ---------- */
+function openDemoHub(){const rows=[];
+ for(const [ch,list] of Object.entries(CH_GAMES))list.forEach((g,i)=>rows.push(`<div class="hrow"><div class="nm"><b>${g.ic} ${esc(g.t)}<span class="tag">${TYPE_T[g.type]}</span></b><small>บทที่ ${ch}</small></div><div class="acts"><button class="pri" data-dm="${ch}:${i}">▶ เล่น</button></div></div>`));
+ openSheet(`<div class="sh"><h2>🎮 ทดลองเล่น</h2><button onclick="closeSheet()">ปิด</button></div><p class="muted" style="margin-top:0">เล่นได้ทุกเกม ไม่บันทึกคะแนน</p>
+ ${rows.join("")}
+ <div class="hrow"><div class="nm"><b>📖 สื่อสอน SCIBeacon</b><small>สาธิตหน้าห้องก่อนให้ทีมลงมือ</small></div><div class="acts"><button data-dm="teach">เปิด</button></div></div>
+ <div class="hrow"><div class="nm"><b>📝 Exit ticket</b><small>ดูข้อสอบและเฉลยรายบท</small></div><div class="acts"><select id="dmXt" style="min-height:40px">${Object.keys(CH_T).map(c=>`<option value="${c}">บท ${c}</option>`).join("")}</select><button data-dm="xt">ดู</button></div></div>`);
+ document.querySelectorAll("[data-dm]").forEach(b=>b.onclick=()=>{const v=b.dataset.dm;
+  if(v==="teach"){closeSheet();startTeach();return}
+  if(v==="xt"){xtPreview(+$("dmXt").value,openDemoHub);return}
+  const [ch,i]=v.split(":").map(Number);const g=CH_GAMES[ch][i];if(g.type==="team")closeSheet();g.demo()})}
+
+async function xtPreview(c,back){const bk=back===openDemoHub?"openDemoHub()":"openXtAdmin()";
+ openSheet(`<div class="sh"><h2>📝 บทที่ ${c}</h2><button onclick="${bk}">กลับ</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
+ let r,stt=null;try{r=await fnCall("getBankForTeacher",{ch:c});stt=(await DB.ref("xtStats/"+c).once("value")).val()}catch(e){openSheet(`<div class="sh"><h2>📝 บทที่ ${c}</h2><button onclick="${bk}">กลับ</button></div><p class="lead">${esc(e.message)}</p>`);return}
+ const S=stt?.items||{};
+ openSheet(`<div class="sh"><h2>📝 บทที่ ${c} · ${esc(CH_T[c]||"")}</h2><button onclick="${bk}">กลับ</button></div>${r.items.map((Q,i)=>{const t=S[Q.id];return`<div class="tbox" style="margin-bottom:6px"><b>${i+1}. ${esc(Q.stem)}</b><ol type="ก" style="margin:4px 0">${Q.opts.map((o,j)=>`<li${j===Q.key?' class="key"':""}>${esc(o)}${j===Q.key?" ✓":""}</li>`).join("")}</ol><div class="muted" style="font-size:13px">${esc(Q.expl)}</div>${t&&t.n?`<div style="font-size:13px;margin-top:4px">ตอบ ${t.n} คน · p ${t.p} · D ${t.D} · <b>${esc(t.level||"")}</b></div>`:""}</div>`}).join("")}`)}
+
+/* ---------- เกมรายบท (แทนหน้าจัดการเดิม) ---------- */
+async function openXtAdmin(ch){if(ch)THV.ch=ch;store.set("sq.thch",THV.ch);const c=THV.ch;
+ openSheet(`<div class="sh"><h2>🗂️ เกมรายบท</h2><button onclick="closeSheet()">ปิด</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
+ let op={},pf={};try{op=(await DB.ref("xt/open").once("value")).val()||{};pf=(await DB.ref("portfolio").once("value")).val()||{}}catch(e){toast("อ่านข้อมูลไม่ได้ ตรวจสิทธิ์อาจารย์")}
+ const P=Object.values(pf);const cnt=k=>P.filter(p=>p&&p[k]).length;
+ const stat=k=>{const n=cnt(k);if(!n)return"ยังไม่มีผล";
+  if(/^\d+$/.test(k)){const a=P.filter(p=>p?.["x"+k]).map(p=>p["x"+k]);return`ส่ง ${a.length} คน · เฉลี่ย ${Math.round(100*a.reduce((s,x)=>s+x.ok/x.n,0)/a.length)}%`}
+  if(k==="g2"||k==="g3"){const N=k==="g2"?12:30;return`เล่น ${n} คน · เฉลี่ย ${Math.round(100*P.filter(p=>p?.[k]).reduce((s,p)=>s+p[k].ok/N,0)/n)}%`}
+  if(k==="l3"){return`เล่น ${n} คน · ครั้งแรกเฉลี่ย ${Math.round(P.filter(p=>p?.l3).reduce((s,p)=>s+(p.l3.first||0),0)/n)}%`}
+  return`ส่งแล้ว ${n} คน`};
+ const xcnt=ch=>P.filter(p=>p?.["x"+ch]).length;
+ const sw=k=>{const on=op[k]===true;return`<button class="${on?"":"pri"}" data-tg="${k}">${on?"ปิด":"เปิด"}</button>`};
+ const state=k=>op[k]===true?`<span class="dot on"></span>เปิดอยู่`:op[k]===false?`<span class="dot"></span>ปิดแล้ว`:`<span class="dot"></span>ยังไม่เคยเปิด`;
+ const games=(CH_GAMES[c]||[]).map((g,i)=>g.type==="team"&&/^c\d$/.test(g.k)
+  ?`<div class="hrow"><div class="nm"><b>${g.ic} ${esc(g.t)}<span class="tag">ทีม</span></b><small>เล่นในห้องเรียน · เลือกโมดูลบทที่ ${c} หลังกดเริ่มคาบ</small></div><div class="acts"><button data-gd="${i}">ทดลอง</button></div></div>`
+  :`<div class="hrow"><div class="nm"><b>${g.ic} ${esc(g.t)}<span class="tag">${TYPE_T[g.type]}</span></b><small>${state(g.k)} · ${stat(g.k)}</small></div><div class="acts"><button class="ghost" data-gd="${i}" aria-label="ทดลอง">▶</button>${g.res?`<button class="ghost" data-gr="${i}">${g.resT}</button>`:""}${sw(g.k)}</div></div>`).join("");
+ const ev=c===4?`<div class="hrow"><div class="nm"><b>🃏 การ์ดเหตุการณ์</b><small>ส่งระหว่างเล่น “แข่งกับเวลา”</small></div><div class="acts"><button class="ghost" data-ev="sick">ป่วย</button><button class="ghost" data-ev="early">เลื่อนสอบ</button></div></div>`:"";
+ const xt=`<div class="hrow"><div class="nm"><b>📝 Exit ticket<span class="tag">5 ข้อ</span></b><small>${state(String(c))} · ${stat(String(c))}</small></div><div class="acts"><button class="ghost" data-xp="1">ดูข้อ</button>${sw(String(c))}</div></div>`;
+ const tabs=Object.keys(CH_T).map(Number).map(n=>{const live=(CH_GAMES[n]||[]).some(g=>op[g.k]===true)||op[n]===true;return`<button data-ch="${n}" aria-pressed="${n===c}" class="${CH_GAMES[n]?"has":""}">${live?"● ":""}${n}</button>`}).join("");
+ openSheet(`<div class="sh"><h2>🗂️ เกมรายบท</h2><button onclick="closeSheet()">ปิด</button></div>
+ <div class="chtabs" role="tablist">${tabs}</div>
+ <h3 style="margin:2px 0 4px">บทที่ ${c} · ${esc(CH_T[c]||"")}</h3>
+ ${games}${ev}${xt}
+ ${CH_GAMES[c]?"":`<p class="muted" style="font-size:13px">บทนี้ยังไม่มีเกม คะแนนคิดจากใบงานและ Exit ticket</p>`}
+ <details style="margin-top:14px"><summary class="muted" style="cursor:pointer">เครื่องมือเพิ่มเติม</summary>
+  <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="ghost" id="bXtAna">📊 วิเคราะห์ข้อสอบทุกบท</button><button class="ghost" id="bXtLegacy">นำผลบทที่ 1–3 แบบเดิมเข้าการวิเคราะห์</button></div>
+  <p class="muted" style="font-size:12.5px">เปิดเมื่อถึงเวลาทำ ปิดเมื่อหมดเวลา · กิจกรรมที่เคยเปิดจะนับคะแนน ผู้ที่ไม่ทำได้ 0 ในส่วนนั้น · เฉลย Exit ticket เปิดให้นิสิตหลังปิด</p></details>`);
+ const sc=document.querySelector(`.chtabs [data-ch="${c}"]`);sc&&sc.scrollIntoView({inline:"center",block:"nearest"});
+ document.querySelectorAll("[data-ch]").forEach(b=>b.onclick=()=>openXtAdmin(+b.dataset.ch));
+ document.querySelectorAll("[data-gd]").forEach(b=>b.onclick=()=>{const g=CH_GAMES[c][+b.dataset.gd];if(g.type==="team")closeSheet();g.demo()});
+ document.querySelectorAll("[data-gr]").forEach(b=>b.onclick=()=>CH_GAMES[c][+b.dataset.gr].res());
+ document.querySelectorAll("[data-xp]").forEach(b=>b.onclick=()=>xtPreview(c));
+ document.querySelectorAll("[data-tg]").forEach(b=>b.onclick=async()=>{const k=b.dataset.tg;const on=op[k]!==true;
+  const nm=/^\d+$/.test(k)?`Exit ticket บทที่ ${k}`:((CH_GAMES[c]||[]).find(g=>g.k===k)?.t||k);
+  if(!on&&/^\d+$/.test(k)&&!confirmClose(k,xcnt(k)))return;
+  try{await DB.ref("xt/open/"+(/^\d+$/.test(k)?+k:k)).set(on);toast(on?`เปิด${nm}แล้ว`:`ปิด${nm}แล้ว`);openXtAdmin()}catch(e){toast("บันทึกไม่ได้ ต้องเป็นบัญชีอาจารย์")}});
+ document.querySelectorAll("[data-ev]").forEach(b=>b.onclick=async()=>{try{await DB.ref("xt/ev").set({id:Date.now(),k:b.dataset.ev});toast("ส่งการ์ดแล้ว ผู้ที่กำลังเล่นจะได้รับในรอบถัดไป")}catch(e){toast("ส่งไม่ได้")}});
+ lvAdmBind()}
+function confirmClose(k,n){return true}
+
+/* ---------- หน้าเตรียมเกมทีมแบบทีละขั้น ---------- */
+const WZ={tid:null,step:1};
+const SC_IC=t=>/ห้องประชุม/.test(t)?"🏢":/น้ำท่วม/.test(t)?"🌊":/ร้าน|สินค้า/.test(t)?"🛍️":/อาหาร/.test(t)?"🍜":/กิจกรรม/.test(t)?"🎫":/ยืม|แล็บ|อุปกรณ์/.test(t)?"🔬":"📦";
+function renderLobby(app){if(MODE==="teacher")return renderLobbyOld(app);
+ const m=me(),local=MODE==="local",key=(G.tid||"")+(local?"L":"");
+ if(WZ.tid!==key){WZ.tid=key;WZ.step=G.sc>=0&&(local?G.pl.every(p=>p.r>=0):m?.r>=0)?3:1}
+ const s=WZ.step,fixed=!local&&(CLS?.mode==="basic"||CLS?.mode==="scrum");
+ const done1=G.pl.length>0,done2=G.sc>=0,miss=[0,1,2,3].filter(r=>!hasRole(G,r));
+ const steps=`<div class="wzs">${["ทีม","โจทย์","บทบาท"].map((t,i)=>`<button data-st="${i+1}" ${s===i+1?'aria-current="step"':""} class="${(i===0&&done1&&s>1)||(i===1&&done2&&s>2)?"done":""}">${i+1} ${t}</button>`).join("")}</div>`;
+ let body="";
+ if(s===1)body=`<div class="card col"><h2>👥 ทีม ${esc(G.team)}</h2>
+  <div class="players" style="margin:0">${G.pl.map((p,i)=>`<span class="pl ${offline.has(p.k)&&!local?"off":""}">${av(p,i)}${esc(p.n)}${p.k===ME.k?" (คุณ)":""}</span>`).join("")}</div>
+  ${local?`<div class="row"><input id="lpn" maxlength="14" placeholder="ชื่อเพื่อน"><button id="bAddP">+ เพิ่ม</button></div>`:`<p class="muted" style="margin:0;font-size:13.5px">ให้เพื่อนเข้าห้อง ${esc(CLASS)} แล้วกดเข้าทีมนี้</p>`}
+  <div class="lbl" style="margin-top:6px">โหมด</div>
+  ${fixed?`<div class="chip">${G.scrum?"บท 6 · Scrum":"บท 1 · อไจล์"} (อาจารย์กำหนด)</div>`:`<div class="g2 modes"><button data-mode="0" aria-pressed="${!G.scrum}"${busy()}>🏃 บท 1 · อไจล์</button><button data-mode="1" aria-pressed="${!!G.scrum}"${busy()}>🔁 บท 6 · Scrum</button></div>`}
+  </div><div class="wznav"><button class="ghost" id="bLT">${local?"กลับ":"ออกจากทีม"}</button><button class="pri big" data-go="2">ต่อไป ›</button></div>`;
+ if(s===2)body=`<div class="card col"><h2>🎯 เลือกโจทย์</h2><p class="muted" style="margin:0;font-size:13.5px">ทุกโจทย์ยากเท่ากัน · แตะค้างหรือกด ⓘ ดูงาน</p>
+  <div class="pgrid">${SCEN.map((x,i)=>{const tk=projTaken(i),on=G.sc===i;return`<button data-sc="${i}" aria-pressed="${on}"${tk&&!on?" disabled":""}><span class="ic">${SC_IC(x.t)}</span>${esc(x.t.replace(/^(ระบบ|แอป)/,"$1 "))}${tk&&!on?`<small class="muted">${esc(tk)}</small>`:""}</button>`}).join("")}</div>
+  ${G.sc>=0?`<button class="ghost" data-scv="${G.sc}">ⓘ ดูงานในโจทย์ ${esc(SCEN[G.sc].t)}</button>`:""}
+  </div><div class="wznav"><button class="ghost" data-go="1">‹ กลับ</button><button class="pri big" data-go="3"${G.sc>=0?"":" disabled"}>ต่อไป ›</button></div>`;
+ if(s===3){const rl=local
+  ?`<div class="rlist">${G.pl.map((p,pi)=>`<div class="rl"><span style="display:flex;align-items:center;gap:8px">${av(p,pi)}${esc(p.n)}</span><button data-lrc="${pi}" style="${p.r>=0?`color:${ROLES[p.r].c}`:""}">${p.r>=0?ROLES[p.r].n:"เลือก"} ▾</button></div>`).join("")}</div>
+    <button class="big bigdice" id="bDice">🎲 สุ่มบทบาทให้ทุกคน</button>`
+  :`<div class="rpick">${ROLES.map((r,i)=>{const t=G.pl.find(q=>q.r===i);return`<button data-r="${i}" aria-pressed="${m?.r===i}"${t&&t.k!==ME.k?" disabled":""}>${r.n}<small>${t?esc(t.n):i<4?"บทหลัก":""}</small></button>`}).join("")}</div>
+    <button class="big bigdice" id="bDice">🎲 เลือกให้ฉัน</button>`;
+  body=`<div class="card col"><h2>🎭 บทบาท</h2>${rl}${miss.length?`<p class="note warn" style="margin:0">ยังขาด: ${miss.map(r=>ROLES[r].n).join(", ")}</p>`:""}</div>
+  <div class="wznav"><button class="ghost" data-go="2">‹ กลับ</button><button class="pri big" id="bStart"${busy()}${G.sc>=0?"":" disabled"}>เริ่มเกม ▶</button></div>`}
+ app.innerHTML=`<div class="top"><div class="tline"><div class="tname">${esc(G.team)}</div>${local?`<span class="chip">เครื่องเดียว</span>`:`<span class="chip">ห้อง ${esc(CLASS)}</span>`}</div></div>${classBanner()}${steps}${body}`;
+ const re=()=>{G.seq++;publish();render()};
+ app.querySelectorAll("[data-st],[data-go]").forEach(b=>b.onclick=()=>{const n=+(b.dataset.st||b.dataset.go);if(n===3&&G.sc<0){toast("เลือกโจทย์ก่อน");WZ.step=2}else WZ.step=n;render()});
+ $("bAddP")&&($("bAddP").onclick=()=>{const n=$("lpn").value.trim();if(!n)return;G=reduce(G,{a:"join"},{k:Math.random().toString(36).slice(2,10),n});re()});
+ $("lpn")&&($("lpn").onkeydown=e=>{if(e.key==="Enter")$("bAddP").click()});
+ app.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{const v=+b.dataset.mode;if(local){G=reduce(G,{a:"mode",x:v},m||ME);re()}else act("mode",v)});
+ const pickSc=i=>{const tk=projTaken(i);if(tk&&G.sc!==i){toast(tk+" เลือกโจทย์นี้แล้ว");return}if(local){G=reduce(G,{a:"sc",x:i},m||ME);re()}else act("sc",i)};
+ app.querySelectorAll("[data-sc]").forEach(b=>{b.onclick=()=>pickSc(+b.dataset.sc);b.oncontextmenu=e=>{e.preventDefault();showProject(+b.dataset.sc,()=>pickSc(+b.dataset.sc))}});
+ app.querySelectorAll("[data-scv]").forEach(b=>b.onclick=()=>{const i=+b.dataset.scv;showProject(i,()=>pickSc(i))});
+ app.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const r=+b.dataset.r;showRole(r,()=>act("role",m?.r===r?-1:r))});
+ app.querySelectorAll("[data-lrc]").forEach(b=>b.onclick=()=>{const pi=+b.dataset.lrc,p=G.pl[pi];
+  openSheet(`<div class="sh"><h2>บทบาทของ ${esc(p.n)}</h2><button onclick="closeSheet()">ปิด</button></div><div class="rpick">${ROLES.map((r,i)=>{const t=G.pl.find(q=>q.r===i&&q.k!==p.k);return`<button data-pr="${i}" aria-pressed="${p.r===i}"${t?" disabled":""}>${r.n}<small>${t?esc(t.n):i<4?"บทหลัก":""}</small></button>`}).join("")}</div>`);
+  document.querySelectorAll("[data-pr]").forEach(x=>x.onclick=()=>{const r=+x.dataset.pr;closeSheet();G=reduce(G,{a:"role",x:p.r===r?-1:r},p);re()})});
+ $("bDice")&&($("bDice").onclick=()=>{if(local){G.pl.forEach(p=>{if(p.r>=0)G=reduce(G,{a:"role",x:-1},p)});const rs=shuffle([...Array(Math.min(8,G.pl.length)).keys()]);G.pl.slice(0,8).forEach((p,i)=>{G=reduce(G,{a:"role",x:rs[i]},G.pl[i])});re();return}
+  const free=[...Array(8).keys()].filter(i=>!G.pl.some(q=>q.r===i&&q.k!==ME.k));const core=free.filter(i=>i<4);const pool=core.length?core:free;if(!pool.length){toast("บทบาทเต็มแล้ว");return}act("role",pool[Math.floor(Math.random()*pool.length)])});
+ $("bStart")&&($("bStart").onclick=()=>act("start"));
+ $("bLT")&&($("bLT").onclick=()=>local?(MODE=null,view="home",render()):leaveTeam())}
 
 /* ---------- teacher: roster · chapter scores · grade path ---------- */
 const RO={tab:"sum",ch:4,C:null};
@@ -1648,7 +1827,7 @@ function __render(){const app=$("app");
  if(view!=="teach")document.body.classList.remove("tm");
  if(view==="teach")return renderTeach(app);
  if(view==="student"||(ST_MODE&&(view==="home"||!MODE)))return renderStudent(app);
- if(view==="home"||!MODE)return renderHome(app);
+ if(view==="home"||!MODE)return (AUTH.teacher&&AUTH.u?renderTHome(app):renderHome(app));
  if(MODE==="teacher"&&view==="teacher")return renderTeacher(app);
  if(MODE==="class"&&CLS?.final)return renderFinal(app);
  if(view==="classlobby")return renderClassLobby(app);
@@ -1772,7 +1951,7 @@ function renderFinalCp(app){const teams=Object.values(teamsNow()).map(t=>t.g).fi
 function projTaken(i){if(MODE!=="class"&&MODE!=="teacher")return null;if(CLS?.dup)return null;const others=Object.values(TEAMS).filter(t=>t&&t.tid!==G.tid);if(others.length>=SCEN.length)return null;const t=others.find(t=>t.sc===i);return t?t.team:null}
 const scName=g=>g&&g.sc>=0&&SCEN[g.sc]?SCEN[g.sc].t:"ยังไม่เลือกโจทย์";
 function showProject(i,onPick){const S=SCEN[i];const tk=projTaken(i);openSheet(`<div class="sh"><h2>${esc(S.t)}</h2><button onclick="closeSheet()">ปิด</button></div><p class="muted" style="margin:0">งานในรายการ (Product Backlog) เรียงตามที่ลูกค้าอยากได้ · ตัวเลขคือแต้มความยาก</p><ol class="blist">${S.b.map(b=>`<li>${esc(b[0])} <b>${b[1]}</b></li>`).join("")}</ol><p class="muted">รวม ${S.b.reduce((a,b)=>a+b[1],0)} แต้ม</p>${onPick?(tk?`<p class="note warn">${esc(tk)} เลือกโจทย์นี้แล้ว</p>`:`<button class="pri big" id="bPickSc">${G.sc===i?"ทีมเลือกโจทย์นี้อยู่แล้ว":"เลือกโจทย์นี้"}</button>`):""}`);$("bPickSc")&&($("bPickSc").onclick=()=>{closeSheet();if(G.sc!==i)onPick()})}
-function renderLobby(app){const m=me();const local=MODE==="local";const tch=MODE==="teacher";
+function renderLobbyOld(app){const m=me();const local=MODE==="local";const tch=MODE==="teacher";
  app.innerHTML=`<div class="top"><div class="tline"><div class="tname">${esc(G.team)}</div>${local?`<span class="chip">เครื่องเดียว</span>`:`<span class="chip">ห้อง ${esc(CLASS)}</span>`}</div></div>${classBanner()}${tch?teacherBar():""}
  <div class="card col"><h2>ผู้เล่น (${G.pl.length}/8)</h2>
   <div class="players" style="margin:0">${G.pl.map((p,i)=>`<span class="pl ${offline.has(p.k)&&!local?"off":""}">${av(p,i)}${esc(p.n)}${p.k===ME.k&&!tch?" (คุณ)":""}${p.r>=0?` · ${ROLES[p.r].n}`:` · <span class="muted">ยังไม่เลือก</span>`}</span>`).join("")}</div>
