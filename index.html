@@ -1321,14 +1321,14 @@ const WZ={tid:null,step:1};
 const SC_IC=t=>/ห้องประชุม/.test(t)?"🏢":/น้ำท่วม/.test(t)?"🌊":/ร้าน|สินค้า/.test(t)?"🛍️":/อาหาร/.test(t)?"🍜":/กิจกรรม/.test(t)?"🎫":/ยืม|แล็บ|อุปกรณ์/.test(t)?"🔬":"📦";
 function renderLobby(app){if(MODE==="teacher")return renderLobbyOld(app);
  const m=me(),local=MODE==="local",key=(G.tid||"")+(local?"L":"");
- if(WZ.tid!==key){WZ.tid=key;WZ.step=G.sc>=0&&(local?G.pl.every(p=>p.r>=0):m?.r>=0)?3:1}
+ if(WZ.tid!==key){WZ.tid=key;WZ.step=G.sc>=0&&(local?G.pl.every(p=>p.r>=0):m?.r>=0)?3:(G.solo?2:1)}
  const s=WZ.step,fixed=!local&&(CLS?.mode==="basic"||CLS?.mode==="scrum");
  const done1=G.pl.length>0,done2=G.sc>=0,miss=[0,1,2,3].filter(r=>!hasRole(G,r));
  const steps=`<div class="wzs">${["ทีม","โจทย์","บทบาท"].map((t,i)=>`<button data-st="${i+1}" ${s===i+1?'aria-current="step"':""} class="${(i===0&&done1&&s>1)||(i===1&&done2&&s>2)?"done":""}">${i+1} ${t}</button>`).join("")}</div>`;
  let body="";
  if(s===1)body=`<div class="card col"><h2>👥 ทีม ${esc(G.team)}</h2>
   <div class="players" style="margin:0">${G.pl.map((p,i)=>`<span class="pl ${offline.has(p.k)&&!local?"off":""}">${av(p,i)}${esc(p.n)}${p.k===ME.k?" (คุณ)":""}</span>`).join("")}</div>
-  ${local?`<div class="row"><input id="lpn" maxlength="14" placeholder="ชื่อเพื่อน"><button id="bAddP">+ เพิ่ม</button></div>`:`<p class="muted" style="margin:0;font-size:13.5px">ให้เพื่อนเข้าห้อง ${esc(CLASS)} แล้วกดเข้าทีมนี้</p>`}
+  ${G.solo?`<p class="muted" style="margin:0;font-size:13.5px">เล่นเดี่ยว · คุณกดได้ทุกปุ่ม ผู้ช่วยถือบทบาทอื่นให้ครบ</p>`:local?`<div class="row"><input id="lpn" maxlength="14" placeholder="ชื่อเพื่อน"><button id="bAddP">+ เพิ่ม</button></div>`:`<p class="muted" style="margin:0;font-size:13.5px">ให้เพื่อนเข้าห้อง ${esc(CLASS)} แล้วกดเข้าทีมนี้</p>`}
   <div class="lbl" style="margin-top:6px">โหมด</div>
   ${fixed?`<div class="chip">${G.scrum?"บท 6 · Scrum":"บท 1 · อไจล์"} (อาจารย์กำหนด)</div>`:`<div class="g2 modes"><button data-mode="0" aria-pressed="${!G.scrum}"${busy()}>🏃 บท 1 · อไจล์</button><button data-mode="1" aria-pressed="${!!G.scrum}"${busy()}>🔁 บท 6 · Scrum</button></div>`}
   </div><div class="wznav"><button class="ghost" id="bLT">${local?"กลับ":"ออกจากทีม"}</button><button class="pri big" data-go="2">ต่อไป ›</button></div>`;
@@ -1360,6 +1360,30 @@ function renderLobby(app){if(MODE==="teacher")return renderLobbyOld(app);
   const free=[...Array(8).keys()].filter(i=>!G.pl.some(q=>q.r===i&&q.k!==ME.k));const core=free.filter(i=>i<4);const pool=core.length?core:free;if(!pool.length){toast("บทบาทเต็มแล้ว");return}act("role",pool[Math.floor(Math.random()*pool.length)])});
  $("bStart")&&($("bStart").onclick=()=>act("start"));
  $("bLT")&&($("bLT").onclick=()=>local?(MODE=null,view="home",render()):leaveTeam())}
+
+/* ---------- ห้องเรียน: เลือกเล่นเดี่ยวหรือเล่นเป็นทีม (แบบ E-Commerce Tycoon) ---------- */
+const SOLO_H=[["ผู้ช่วย·SM",1],["ผู้ช่วย·Dev",2],["ผู้ช่วย·QA",3],["ผู้ช่วย·ลูกค้า",4]];
+async function createSolo(){const tid=genCode();let g=newGame(tid,(ME.n||"ฉัน")+" (เดี่ยว)");g.tid=tid;g.cls=CLASS;g.solo=1;g=reduce(g,{a:"join"},ME);
+ SOLO_H.forEach(([n,r],i)=>{const k="h"+i+"_"+tid;g=reduce(g,{a:"join"},{k,n});g=reduce(g,{a:"role",x:r},{k})});
+ g=reduce(g,{a:"role",x:0},ME);g.seq=1;await teamRef(tid).set(clean(g));TID=tid;store.set("sq.lastteam."+CLASS,tid);G=g;view="game";render()}
+let CL_TEAM=false;
+function renderClassLobby(app){const teams=Object.values(teamsNow()).map(t=>t.g);const mine=teams.filter(g=>g.pl.some(p=>p.k===ME.k));const others=teams.filter(g=>!g.solo&&!g.pl.some(p=>p.k===ME.k));
+ app.innerHTML=`<div class="top"><div class="tline"><div class="tname">ห้องเรียน</div><span class="code">${esc(CLASS)}</span></div></div>${classBanner()}
+ ${mine.length?`<div class="card col"><h2>เล่นต่อ</h2>${mine.map(g=>`<button class="pri big" data-tj="${esc(g.tid)}">${g.solo?"🙋":"👥"} ${esc(g.team)} <small style="font-weight:400">· ${g.ph==="lobby"?"กำลังเตรียม":g.ph==="end"?"จบแล้ว":"รอบ "+(g.spr||"–")}</small></button>`).join("")}</div>`:""}
+ <div class="tgrid" style="margin-top:12px">
+  <button class="tile ${mine.length?"":"pri"}" id="bSolo"><span class="ic">🙋</span>เล่นเดี่ยว<small>คุมทุกบทบาทเอง เริ่มได้ทันที</small></button>
+  <button class="tile" id="bTeamOpt" aria-pressed="${CL_TEAM}"><span class="ic">👥</span>เล่นเป็นทีม<small>สร้างทีม หรือเข้าร่วมเพื่อน</small></button>
+ </div>
+ ${CL_TEAM?`<div class="card col"><h2>👥 เล่นเป็นทีม</h2>
+  <div class="row" style="gap:8px"><input id="tm" maxlength="20" placeholder="ชื่อทีมใหม่" style="flex:1"><button class="pri" id="bCT">สร้าง</button></div>
+  ${others.length?`<div class="lbl" style="margin-top:6px">หรือเข้าร่วมทีมเพื่อน</div>${others.map(g=>`<div class="hrow"><div class="nm"><b>${esc(g.team)}</b><small>${g.pl.length}/8 คน · ${esc(g.pl.map(p=>p.n).join(", "))}</small></div><div class="acts"><button data-tj="${esc(g.tid)}"${g.pl.length>=8?" disabled":""}>เข้าร่วม</button></div></div>`).join("")}`:`<p class="muted" style="margin:0;font-size:13.5px">ยังไม่มีทีมอื่น สร้างทีมแล้วบอกชื่อทีมให้เพื่อน</p>`}
+ </div>`:""}
+ <div style="text-align:center;margin-top:10px"><button class="ghost" onclick="leave()">ออกจากห้องเรียน</button></div>`;
+ app.querySelectorAll("[data-tj]").forEach(b=>b.onclick=()=>joinTeam(b.dataset.tj));
+ $("bSolo").onclick=()=>{$("bSolo").disabled=true;createSolo().catch(()=>{toast("สร้างไม่สำเร็จ ลองใหม่");$("bSolo").disabled=false})};
+ $("bTeamOpt").onclick=()=>{CL_TEAM=!CL_TEAM;render();setTimeout(()=>$("tm")&&$("tm").focus(),50)};
+ $("bCT")&&($("bCT").onclick=()=>createTeam($("tm").value.trim()));
+ $("tm")&&($("tm").onkeydown=e=>{if(e.key==="Enter")$("bCT").click()})}
 
 /* ---------- teacher: roster · chapter scores · grade path ---------- */
 const RO={tab:"sum",ch:4,C:null};
@@ -1891,7 +1915,7 @@ function renderHome(app){const online=FBOK;
  $("bBack").onclick=()=>{const c=$("cd").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"")||store.get("sq.lastcls")||"";if(c.length!==5){toast("พิมพ์รหัสห้องเดิมในช่องรหัสห้องก่อน");return}joinClass(c,true)};
  $("bLocal").onclick=()=>{if(!getName())return;goLocal("")};wireAuth()}
 
-function renderClassLobby(app){const teams=Object.values(teamsNow()).map(t=>t.g);
+function renderClassLobbyOld(app){const teams=Object.values(teamsNow()).map(t=>t.g);
  app.innerHTML=`<div class="top"><div class="tline"><div class="tname">ห้องเรียน</div><span class="code">${esc(CLASS)}</span></div></div>${classBanner()}
  <div class="card col"><h2>เลือกทีม</h2>${teams.length?teams.map(g=>`<div class="bi" style="grid-template-columns:1fr auto"><div><b>${esc(g.team)}</b><div class="muted" style="font-size:13px">${esc(scName(g))} · ${g.pl.length}/8 คน · ${g.ph==="lobby"?"กำลังรอเริ่ม":g.ph==="end"?"จบแล้ว":"รอบ "+(g.spr||"–")} · ${esc(g.pl.map(p=>p.n).join(", "))}</div></div><button class="pri" data-tj="${esc(g.tid)}"${g.pl.length>=8&&!g.pl.some(p=>p.k===ME.k)?" disabled":""}>${g.pl.some(p=>p.k===ME.k)?"กลับเข้าทีม":"เข้าร่วม"}</button></div>`).join(""):`<p class="muted" style="margin:0">ยังไม่มีทีม สร้างทีมแรกได้เลย</p>`}</div>
  <div class="card col"><h2>สร้างทีมใหม่</h2><input id="tm" maxlength="20" placeholder="ชื่อทีม เช่น ทีมช้างน้อย"><button class="big" id="bCT">สร้างทีม</button></div>
