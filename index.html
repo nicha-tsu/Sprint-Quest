@@ -555,7 +555,7 @@ function onClassSnap(s){const v=s.val()||{};const __c=v.cls||null;CLS=__c;sfxWat
  // backup: anyone in a waiting team nudges it when the gate opens
  if(MODE==="class"&&G&&((G.ph==="wait"&&effGate()>=G.nextSpr)||(CLS?.ev&&CLS.ev.id>(G.evSeen||0)&&G.ph!=="lobby"))){if(!onClassSnap.busy){onClassSnap.busy=1;txTeam(G.tid,null,ME).finally(()=>onClassSnap.busy=0)}}
  later()}
-async function joinClass(code,asTeacher){sfxReset();if(!FBOK){toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");return}CLASS=code;MODE=asTeacher?"teacher":"class";view=asTeacher?"teacher":"classlobby";G=null;TID=null;CLS=null;TEAMS={};render();
+async function joinClassOld(code,asTeacher){sfxReset();if(!FBOK){toast("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");return}CLASS=code;MODE=asTeacher?"teacher":"class";view=asTeacher?"teacher":"classlobby";G=null;TID=null;CLS=null;TEAMS={};render();
  const cref=DB.ref(`classes/${code}/cls`);
  if(asTeacher){const ex=(await cref.once("value")).val();
   if(ex&&ex.tk&&ex.tk!==ME.k){toast("ห้องนี้เป็นของอาจารย์เครื่องอื่น");MODE=null;view="home";render();return}
@@ -907,19 +907,20 @@ function printWs(list,key){let pa=$("printArea");if(!pa){pa=document.createEleme
 function printAllKeys(){const ts=Object.values(TEAMS).filter(g=>g&&g.sc>=0);if(!ts.length){toast("ยังไม่มีทีมที่เลือกโจทย์");return}printWs(ts.map(wsData),true)}
 
 /* ================= GOOGLE LOGIN · ROSTER · PERSONAL PORTFOLIO ================= */
-const AUTH={u:null,prof:null,teacher:false,ready:false,saved:{}};
+const AUTH={u:null,prof:null,teacher:false,ta:false,ready:false,saved:{}};
 const inLine=/\bLine\//i.test(navigator.userAgent)||/FBAN|FBAV|Instagram/i.test(navigator.userAgent);
 function authInit(){if(!FBOK||!firebase.auth)return;try{firebase.auth().getRedirectResult().catch(()=>{})}catch(e){}
- firebase.auth().onAuthStateChanged(async u=>{AUTH.u=u;AUTH.prof=null;AUTH.teacher=false;
+ firebase.auth().onAuthStateChanged(async u=>{AUTH.u=u;AUTH.prof=null;AUTH.teacher=false;AUTH.ta=false;
   if(u){ME.k=u.uid;if(!ME.n)ME.n=(u.displayName||"").split(" ")[0].slice(0,14);store.set("sq.me",ME);
    try{AUTH.teacher=!!(await DB.ref("roles/teachers/"+u.uid).once("value")).val()}catch(e){}
+   try{if(!AUTH.teacher)AUTH.ta=!!(await DB.ref("roles/tas/"+u.uid).once("value")).val()}catch(e){}
    try{AUTH.prof=(await DB.ref("users/"+u.uid).once("value")).val()}catch(e){}}
   AUTH.ready=true;later()})}
 function signIn(){if(inLine){toast("เปิดจากแอป LINE/Facebook ไม่ได้ กด ⋯ แล้วเลือก “เปิดในเบราว์เซอร์” ก่อน");return}
  const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
  firebase.auth().signInWithPopup(p).catch(e=>{if(/popup-blocked|operation-not-supported|popup-closed-by-user/.test(e.code||"")){if(!/closed-by-user/.test(e.code))firebase.auth().signInWithRedirect(p)}else toast("เข้าสู่ระบบไม่สำเร็จ ("+(e.code||e.message)+")")})}
 async function signOutNow(){try{await firebase.auth().signOut()}catch(e){}ME.k=Math.random().toString(36).slice(2,10);store.set("sq.me",ME);render()}
-async function verifySid(raw){const sid=String(raw||"").replace(/\D/g,"");const u=AUTH.u;if(!u)return;if(sid.length<6){toast("รหัสนิสิตไม่ถูกต้อง");return}
+async function verifySidOld(raw){const sid=String(raw||"").replace(/\D/g,"");const u=AUTH.u;if(!u)return;if(sid.length<6){toast("รหัสนิสิตไม่ถูกต้อง");return}
  try{const n=(await DB.ref(`rosters/${sid}/n`).once("value")).val();if(n===null){toast("ไม่พบรหัสนี้ในรายชื่อนิสิต แจ้งอาจารย์ผู้สอน");return}}catch(e){/* rules hide the roster from students: let the write rule decide */}
  try{await DB.ref(`rosters/${sid}/uid`).set(u.uid);const prof={sid,n:u.displayName||ME.n||"",at:Date.now()};await DB.ref("users/"+u.uid).set(prof);AUTH.prof=prof;toast("ยืนยันตัวตนสำเร็จ");render()}
  catch(e){toast("ยืนยันไม่สำเร็จ: รหัสนี้ไม่อยู่ในรายชื่อ หรือมีบัญชีอื่นใช้ไปแล้ว")}}
@@ -1026,7 +1027,7 @@ function mmResult(r){const mm=Math.floor(r.sec/60),ss=String(r.sec%60).padStart(
 const GRADE=[[80,"A"],[75,"B+"],[70,"B"],[65,"C+"],[60,"C"],[55,"D+"],[50,"D"],[0,"F"]];
 const gradeOf=p=>GRADE.find(g=>p>=g[0])[1];
 const r1=x=>Math.round(x*10)/10;
-const OTHERS=[["fin","สอบปลายภาค",25],["cap","Capstone Project",15],["par","การมีส่วนร่วม",10]];
+const OTHERS=[["fin","สอบปลายภาค",25],["cap","Capstone Project",15],["live","กิจกรรมในคาบ",4]];
 
 /* ---------- scoring engine (teacher side: needs every portfolio) ---------- */
 function xtCtx(ro,pf,mk,op){const cmax={};for(const m of ["c1","c6"]){let mx=0;for(const u in pf)for(const r of Object.values(pf[u]?.[m]||{}))mx=Math.max(mx,+r.score||0);cmax[m]=mx}
@@ -1044,7 +1045,7 @@ function chScore(ch,uid,sid,C){const mod=GAMECH[ch],P={},PD={};
  if(Object.keys(PD).length)(C.pend=C.pend||{})[ch]=PD;
  let e=0,a=0;for(const k in P){e+=P[k][0];a+=P[k][1]}if(!a)return null;
  const out={s:r1(10*e/a)};for(const k in P)out[k]=[r1(P[k][0]),P[k][1]];if(C.op[ch]!=null&&!P.ws)out.wsPending=1;return out}
-function summary(uid,sid,C){const ch={};let earned=0,possible=0;C.pend={};
+function summaryV19(uid,sid,C){const ch={};let earned=0,possible=0;C.pend={};
  for(let c=1;c<=12;c++){const s=chScore(c,uid,sid,C);if(s){ch[c]=s;earned+=s.s*50/120;possible+=50/12}}
  const al=[r1(earned),r1(possible)];const oth={};
  for(const [k,,mx] of OTHERS){const v=C.mk[sid]?.[k];if(v!=null&&v!==""){const x=Math.max(0,Math.min(mx,+v));oth[k]=x;earned+=x;possible+=mx}}
@@ -1238,7 +1239,7 @@ const TYPE_T={team:"ทีม",ind:"รายบุคคล",ws:"ใบงา�
 function demoSq(scrum){closeSheet();startDemo("sq");if(scrum){try{G=reduce(G,{a:"mode",x:1},G.pl[0]||ME);render()}catch(e){}}}
 
 /* ---------- หน้าแรกของอาจารย์ ---------- */
-function renderTHome(app){const u=AUTH.u,last=store.get("sq.lastcls")||"";
+function renderTHomeV19(app){const u=AUTH.u,last=store.get("sq.lastcls")||"";
  app.innerHTML=`<div class="hero" style="padding-bottom:6px"><div class="brand">${logoH(40)}<div><b>Sprint Quest</b><small>0214343 การจัดการโครงการดิจิทัล</small></div></div></div>
  <div class="card row" style="justify-content:space-between;align-items:center"><div><b>${esc(u?.displayName||"อาจารย์")}</b> <span class="tag">อาจารย์</span>${last?`<div class="muted" style="font-size:13px">ห้องล่าสุด ${esc(last)}</div>`:""}</div><button class="ghost" id="tOut">ออกจากระบบ</button></div>
  <div class="tgrid" style="margin-top:12px">
@@ -1399,10 +1400,267 @@ async function ensureRoom(k){let code=(await DB.ref("xt/room/"+k).once("value"))
 function teamRoomRows(op){return["c1","c4","c6"].filter(k=>op[k]===true&&XROOM[k]).map(k=>{const ch={c1:1,c4:4,c6:6}[k],g=CH_GAMES[ch].find(x=>x.k===k);
  return`<div class="xtr"><div><b>${g.ic} บทที่ ${ch} · ${esc(g.t)}</b><div class="muted" style="font-size:13px">เล่นเดี่ยวหรือเป็นทีม · เล่นต่อจากเดิมได้</div></div><button class="pri" data-room="${esc(XROOM[k])}">เล่น</button></div>`}).join("")}
 
+/* ---------- บทที่ 3: ปรับข้อความเกมให้อ่านง่ายสำหรับนิสิตปริญญาตรี ---------- */
+setTimeout(function(){const R=(t)=>t.replace(/ ?requirement ?/g,"ความต้องการ").replace(/ ?scope creep/g,"ขอบเขตบานปลาย").replace(/ ?gold plating ?/g,"การทำเกินสั่ง").replace(/user story/g,"User Story");
+ try{SG_R2.forEach(q=>{q[0]=R(q[0]);q[2]=R(q[2])});SG_R3.forEach(q=>{q[1]=q[1].map(R);q[2]=R(q[2])});SG_R4.forEach(q=>{q.w=R(q.w)});
+  SG_R3[3][2]="ขอบเขตงานยังเท่าเดิม แต่เป็นปัญหาที่ทำให้งานช้า ทีมต้องประเมินผลต่อตารางเวลา แล้วแจ้งผู้สนับสนุนโครงการ ไม่ใช่การขอเพิ่มขอบเขต";
+  SM_TY.forEach(t=>{if(t[0]==="creep")t[1]="ขอบเขตบานปลาย (Scope Creep)";if(t[0]==="gold")t[1]="ทำเกินสั่ง (Gold Plating)"});}catch(e){console.warn(e)}},0);
+
+/* ================= v20: ห้องเรียนวันนี้ · เช็คชื่อ · ตั้งค่ารายวิชา · คะแนนการเข้าเรียน ================= */
+(function(){if(document.getElementById("v20css"))return;const st=document.createElement("style");st.id="v20css";st.textContent=`
+.tgrid.six{grid-template-columns:1fr 1fr}
+.attbig{font-size:19px;padding:18px 14px;min-height:64px;width:100%}
+.attok{display:flex;gap:10px;align-items:center;padding:12px;border-radius:12px;background:#e8f6ee;color:#1f6b3f;font-weight:700}
+.attwarn{padding:10px 12px;border-radius:12px;background:#fdecea;color:#9b2c24;font-size:14px}
+.attsum{display:flex;gap:6px;flex-wrap:wrap;font-size:13.5px}
+.attsum span{padding:3px 9px;border-radius:999px;background:var(--chip,#eef2f6)}
+.stc{display:inline-block;min-width:44px;text-align:center;padding:2px 8px;border-radius:999px;font-size:12.5px;font-weight:700}
+.st-present{background:#e1f4e8;color:#1f6b3f}.st-late{background:#fff3d6;color:#8a5a00}.st-absent{background:#fde3e1;color:#9b2c24}.st-leave{background:#e6eefb;color:#2a4f8f}.st-none{background:#eef1f4;color:#7a8591}
+.attcode{font-size:56px;font-weight:800;letter-spacing:8px;text-align:center;font-variant-numeric:tabular-nums;margin:4px 0}
+.attgrid{border-collapse:collapse;font-size:13px}.attgrid td,.attgrid th{border:1px solid var(--line,#e3e8ee);padding:4px 6px;text-align:center;white-space:nowrap}
+.attgrid td.nm{text-align:left}.attgrid button{padding:1px 6px;min-height:26px;font-size:12.5px}
+.wsum{font-weight:700}.wsum.bad{color:#b3261e}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}.kv input,.kv select{min-height:40px}
+`;document.head.appendChild(st)})();
+
+const V20={W:{al:50,fin:25,cap:15,att:6,live:4},course:null,loaded:false};
+let V20ME=null;
+const ST_T={present:"มา",late:"สาย",absent:"ขาด",leave:"ลา"};
+const stChip=s=>`<span class="stc st-${s||"none"}">${s?ST_T[s]:"–"}</span>`;
+const attRank={present:4,late:3,leave:2,absent:1};
+const attBest=(a,b)=>((attRank[a]||0)>=(attRank[b]||0)?a:b);
+function attScoreC(sts,max,warnAbs){const n={present:0,late:0,absent:0,leave:0};for(const s of sts)if(n[s]!=null)n[s]++;const base=n.present+n.late+n.absent;
+ return{score:base?Math.round(100*max*(n.present+.5*n.late)/base)/100:null,max,n,warn:n.absent>(warnAbs??2)}}
+const fmtT=ms=>ms?new Date(ms).toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}):"–";
+const v20Week=(start,ms)=>{const d0=Date.parse(start+"T00:00:00Z"),d=Date.parse(new Date(ms+7*3600e3).toISOString().slice(0,10)+"T00:00:00Z");return Math.floor((d-d0)/(7*864e5))+1};
+const v20Date=(start,wk)=>new Date(Date.parse(start+"T00:00:00Z")+(wk-1)*7*864e5).toISOString().slice(0,10);
+const thDate=d=>{try{return new Date(d+"T00:00:00Z").toLocaleDateString("th-TH",{day:"numeric",month:"short",timeZone:"UTC"})}catch(e){return d}};
+const DEF_COURSE={startDate:"2026-11-05",weeks:16,sections:{"01":{name:"กลุ่ม 01",day:4,start:"09:00",end:"12:00",room:"",lat:null,lng:null,radius:50}},att:{onTime:15,late:45,warnAbs:2}};
+
+async function v20Load(force){if(V20.loaded&&!force)return;try{const w=(await DB.ref("config/weights").once("value")).val();if(w)V20.W={...V20.W,...w};V20.course=(await DB.ref("config/course").once("value")).val()||null}catch(e){}
+ V20.loaded=true;for(const o of OTHERS){if(o[0]==="fin")o[2]=V20.W.fin;if(o[0]==="cap")o[2]=V20.W.cap;if(o[0]==="live")o[2]=V20.W.live}}
+const v20Course=()=>{const c=V20.course||{};return{...DEF_COURSE,...c,att:{...DEF_COURSE.att,...(c.att||{})},sections:c.sections||DEF_COURSE.sections}};
+const v20Sec=(r,C)=>String(r?.sec||"").replace(/[^0-9A-Za-z]/g,"")||Object.keys(C.sections)[0];
+
+/* ---------- คะแนน: ปรับคะแนนรายบทตามการเข้าเรียน และคิดคะแนนการเข้าเรียนเป็นส่วนหนึ่งของการมีส่วนร่วม ---------- */
+function attAdj(s,st){if(!s||!st||st==="present"||st==="late")return s;const o={...s};
+ if(st==="absent"){if(o.team)o.team=[0,o.team[1]];if(o.ws)o.ws=[0,o.ws[1]];if(o.ind)o.ind=[r1(o.ind[0]*.75),o.ind[1]];if(o.xt)o.xt=[r1(o.xt[0]*.75),o.xt[1]];o.abs="absent"}
+ else if(st==="leave"){delete o.team;delete o.ws;o.abs="leave"}
+ let e=0,a=0;for(const k of ["team","ind","ws","xt"])if(o[k]){e+=o[k][0];a+=o[k][1]}if(!a)return null;o.s=r1(10*e/a);return o}
+function summary(uid,sid,C){const ch={};let earned=0,possible=0;C.pend={};const W=V20.W;
+ const self=sid&&sid===AUTH.prof?.sid&&V20ME;const AC=C.attCh?.[sid]||(self?V20ME.ch:null)||{};
+ for(let c=1;c<=12;c++){const s=attAdj(chScore(c,uid,sid,C),AC[c]);if(s){ch[c]=s;earned+=s.s*W.al/120;possible+=W.al/12}}
+ const al=[r1(earned),r1(possible)];const oth={};
+ for(const [k,,mx] of OTHERS){const v=C.mk[sid]?.[k];if(v!=null&&v!==""){const x=Math.max(0,Math.min(mx,+v));oth[k]=x;earned+=x;possible+=mx}}
+ const AS=C.attSum?.[sid]||(self?V20ME.sum:null);
+ if(AS&&AS.score!=null){oth.att=AS.score;earned+=AS.score;possible+=W.att}
+ else{const p=C.mk[sid]?.par;if(p!=null&&p!==""){const x=Math.max(0,Math.min(W.att+W.live,+p));oth.par=x;earned+=x;possible+=W.att+W.live}}
+ const pct=possible?100*earned/possible:null;
+ return{at:Date.now(),ch,pend:C.pend,al,oth,att:AS?{n:AS.n,warn:AS.warn}:null,earned:r1(earned),possible:r1(possible),pct:pct==null?null:r1(pct),grade:pct==null?"-":gradeOf(pct)}}
+// ข้อมูลการเข้าเรียนของทุกคน สำหรับฝั่งผู้สอน (ใช้ตอนคำนวณและอัปเดตคะแนน)
+async function v20Ctx(C){await v20Load(true);let ss={},at={};try{ss=(await DB.ref("sessions").once("value")).val()||{};at=(await DB.ref("att").once("value")).val()||{}}catch(e){}
+ const CO=v20Course();C.attCh={};C.attSum={};C.attSt={};
+ for(const [sid,r] of Object.entries(C.ro||{})){const sec=v20Sec(r,CO);const sts=[],chs={};
+  for(const [id,x] of Object.entries(ss)){if(x.sec!==sec||x.state!=="closed")continue;const st=at?.[id]?.[sid]?.st;if(!st)continue;sts.push(st);chs[x.ch]=chs[x.ch]?attBest(chs[x.ch],st):st}
+  C.attCh[sid]=chs;C.attSt[sid]=sts;if(sts.length)C.attSum[sid]=attScoreC(sts,V20.W.att,CO.att.warnAbs)}}
+
+/* ---------- ผูกรหัสนิสิต: ผ่าน Cloud Function (อีเมลมหาวิทยาลัยผูกทันที อีเมลอื่นใช้รหัสผูกจากอาจารย์) ---------- */
+async function verifySid(raw,code){const sid=String(raw||"").replace(/\D/g,"");const u=AUTH.u;if(!u)return;if(sid.length<6){toast("รหัสนิสิตไม่ถูกต้อง");return}
+ try{const prof=await fnCall("claimStudentId",{sid,code:code||""});AUTH.prof=prof;closeSheet();toast("ยืนยันตัวตนสำเร็จ");render()}
+ catch(e){if(/NEED_CODE/.test(e.message))return askClaimCode(sid);toast(e.message)}}
+function askClaimCode(sid){openSheet(`<div class="sh"><h2>🔑 รหัสผูกบัญชี</h2><button onclick="closeSheet()">ปิด</button></div>
+ <p style="margin-top:0">บัญชีนี้ไม่ใช่อีเมล <b>${esc(sid)}@tsu.ac.th</b> จึงต้องใช้ <b>รหัสผูก 8 ตัว</b> ที่ได้จากอาจารย์ (ใช้ได้ครั้งเดียว กรอกผิดได้ไม่เกิน 5 ครั้ง)</p>
+ <input id="clCode" class="code-in" maxlength="10" placeholder="เช่น K7MP3QXA" autocomplete="off" autocapitalize="characters"><button class="pri big" id="bClCode">ยืนยัน</button>
+ <p class="muted" style="font-size:13px">หรือออกจากระบบแล้วเข้าด้วยอีเมลมหาวิทยาลัย ${esc(sid)}@tsu.ac.th จะผูกได้ทันทีโดยไม่ต้องใช้รหัส</p>`);
+ $("bClCode").onclick=()=>verifySid(sid,$("clCode").value.trim())}
+
+/* ---------- นิสิต: เช็คชื่อ และการเข้าเรียนของฉัน ---------- */
+function getPos(){return new Promise((ok,no)=>{if(!navigator.geolocation)return no(new Error("เบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่ง"));
+ navigator.geolocation.getCurrentPosition(p=>ok({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy}),e=>no(new Error(e.code===1?"ไม่ได้อนุญาตให้ใช้ตำแหน่ง เปิดสิทธิ์ตำแหน่งของเบราว์เซอร์แล้วลองใหม่":"หาตำแหน่งไม่ได้ ลองออกไปใกล้หน้าต่างหรือเปิด GPS")),{enableHighAccuracy:true,timeout:15000,maximumAge:0})})}
+let V20SEC_L=null;
+async function v20StudentAtt(){const el=$("stAtt");if(!el||!AUTH.prof?.sid)return;let r;
+ try{r=await fnCall("myAttendance",{})}catch(e){el.innerHTML=`<p class="muted" style="margin:0">โหลดการเข้าเรียนไม่ได้: ${esc(e.message)}</p>`;return}
+ const ch={};for(const x of r.list)if(x.state==="closed"&&x.st)ch[x.ch]=ch[x.ch]?attBest(ch[x.ch],x.st):x.st;
+ V20ME={...r,ch,openId:r.open?.id||null,checked:r.open&&["present","late"].includes(r.open.st)};
+ if(V20SEC_L!==r.sec){if(V20SEC_L)DB.ref("attOpen/"+V20SEC_L).off();V20SEC_L=r.sec;let first=true;DB.ref("attOpen/"+r.sec).on("value",()=>{if(first){first=false;return}v20StudentAtt()})}
+ const o=r.open,n=r.sum.n;let top="";
+ if(o&&V20ME.checked)top=`<div class="attok">✅ เช็คชื่อแล้ว · ${ST_T[o.st]} ${fmtT(o.at)} <span class="muted" style="font-weight:400">สัปดาห์ ${o.wk} · บทที่ ${o.ch}</span></div>`;
+ else if(o)top=`<button class="pri attbig" id="bCheckIn">📍 เช็คชื่อเข้าห้อง<br><small style="font-weight:400">สัปดาห์ ${o.wk} · บทที่ ${o.ch} ${esc(CH_T[o.ch]||"")} · ต้องอยู่ในห้องเรียน</small></button>
+  <div id="ciCode" hidden><p class="muted" style="margin:6px 0 4px">อยู่นอกพิกัดหรือ GPS ไม่แม่น ใช้รหัสคาบ 6 หลักบนจอหน้าห้อง</p><div class="row" style="gap:6px"><input id="ciCodeIn" class="code-in" inputmode="numeric" maxlength="6" placeholder="รหัสคาบ" style="flex:1"><button class="big" id="bCiCode">ส่ง</button></div></div><p class="muted" id="ciMsg" style="margin:4px 0 0;font-size:13.5px"></p>`;
+ const absCh=Object.entries(ch).filter(([,s])=>s==="absent").map(([c])=>c);
+ el.innerHTML=`<h2 style="margin:0">🏫 การเข้าเรียน</h2>${top}
+  <div class="attsum"><span class="muted" style="background:none;padding-left:0">คาบที่ปิดแล้ว</span><span>มา ${n.present}</span><span>สาย ${n.late}</span><span>ขาด ${n.absent}</span><span>ลา ${n.leave}</span>${r.sum.score!=null?`<span><b>${r.sum.score}</b> / ${r.sum.max} คะแนน</span>`:""}</div>
+  ${r.sum.warn?`<div class="attwarn">⚠️ ขาดเรียน ${n.absent} ครั้ง (เกิน ${v20Course().att.warnAbs} ครั้ง) โปรดติดต่ออาจารย์ผู้สอน</div>`:""}
+  ${absCh.length?`<p class="muted" style="margin:0;font-size:13px">บทที่ ${absCh.join(", ")}: ขาดเรียน · งานเดี่ยวคิด 75% · งานกลุ่มไม่ได้คะแนน</p>`:""}
+  <button class="ghost" id="bAttHist" style="align-self:flex-start">ประวัติการเข้าเรียน · ยื่นลา</button>`;
+ $("bAttHist").onclick=()=>v20AttHistory(r);
+ if($("bCheckIn"))$("bCheckIn").onclick=()=>v20DoCheckIn(o);
+ if($("bCiCode"))$("bCiCode").onclick=()=>v20DoCheckIn(o,$("ciCodeIn").value.trim())}
+async function v20DoCheckIn(o,code){const b=$("bCheckIn"),msg=$("ciMsg");if(b)b.disabled=true;msg&&(msg.textContent="กำลังหาตำแหน่ง…");let pos={};
+ try{pos=await getPos()}catch(e){if(!code){msg&&(msg.textContent=e.message);if(o.mode==="both")$("ciCode").hidden=false;if(b)b.disabled=false;return}}
+ msg&&(msg.textContent="กำลังเช็คชื่อ…");
+ try{const r=await fnCall("checkIn",{...pos,...(code?{code}:{})});toast(`เช็คชื่อแล้ว · ${ST_T[r.st]}`);v20StudentAtt()}
+ catch(e){msg&&(msg.textContent=e.message);if(o.mode==="both"&&/นอกห้อง|รหัสคาบ|ตำแหน่ง/.test(e.message))$("ciCode").hidden=false;if(b)b.disabled=false}}
+function v20AttHistory(r){const rows=r.list.map(x=>{const can=x.state==="closed"&&(x.st==="absent"||!x.st)&&x.leave!=="ok"&&x.leave!=="no";
+  return`<tr><td>${x.wk}</td><td>${thDate(x.date)}</td><td>บท ${x.ch}</td><td>${stChip(x.st)}</td><td>${x.leave?{pending:"รอพิจารณา",ok:"อนุมัติ",no:"ไม่อนุมัติ"}[x.leave]:can?`<button data-lv="${x.id}">ยื่นลา</button>`:""}</td></tr>`}).join("");
+ openSheet(`<div class="sh"><h2>🏫 ประวัติการเข้าเรียน</h2><button onclick="closeSheet()">ปิด</button></div>
+ <p class="muted" style="margin-top:0">มา = 1 · สาย = 0.5 (หักคะแนนการตรงต่อเวลา ไม่นับเป็นขาด) · ลาที่อนุมัติไม่นับในฐาน · ขาด = 0</p>
+ <div class="tw"><table class="score"><tr><th>สัปดาห์</th><th>วันที่</th><th>บท</th><th>สถานะ</th><th>ใบลา</th></tr>${rows||`<tr><td colspan="5" class="muted">ยังไม่มีคาบ</td></tr>`}</table></div>
+ <div id="lvForm" hidden class="tbox" style="margin-top:10px"><b>ยื่นลา / ขอชดเชย</b><textarea id="lvWhy" rows="3" placeholder="เหตุผล เช่น ป่วย (แนบลิงก์หลักฐานถ้ามี)" style="width:100%;margin-top:6px"></textarea><input id="lvLink" placeholder="ลิงก์หลักฐาน (ไม่บังคับ)" style="width:100%;margin-top:6px"><button class="pri" id="bLvSend" style="margin-top:6px">ส่งคำขอ</button></div>`);
+ let cur=null;document.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{cur=b.dataset.lv;$("lvForm").hidden=false;$("lvWhy").focus()});
+ $("bLvSend").onclick=async()=>{try{await fnCall("leaveSubmit",{id:cur,reason:$("lvWhy").value,link:$("lvLink").value});toast("ส่งคำขอแล้ว รออาจารย์พิจารณา");const n=await fnCall("myAttendance",{});v20AttHistory(n)}catch(e){toast(e.message)}}}
+// งานกลุ่มทำได้เฉพาะผู้ที่เช็คชื่อแล้วระหว่างคาบที่เปิดอยู่
+async function joinClass(code,asTeacher){if(!asTeacher&&AUTH.prof?.sid&&!AUTH.teacher){try{if(!V20ME)await v20StudentAtt()}catch(e){}
+  if(V20ME?.openId&&!V20ME.checked){toast("เช็คชื่อเข้าห้องเรียนก่อน จึงจะเข้าร่วมงานกลุ่มได้");return}}
+ return joinClassOld(code,asTeacher)}
+
+/* ---------- ผู้สอน: หน้าแรก ---------- */
+function renderTHome(app){const u=AUTH.u,last=store.get("sq.lastcls")||"",ta=!AUTH.teacher&&AUTH.ta;
+ app.innerHTML=`<div class="hero" style="padding-bottom:6px"><div class="brand">${logoH(40)}<div><b>Sprint Quest</b><small>0214343 การจัดการโครงการดิจิทัล</small></div></div></div>
+ <div class="card row" style="justify-content:space-between;align-items:center"><div><b>${esc(u?.displayName||"อาจารย์")}</b> <span class="tag">${ta?"ผู้ช่วยสอน":"อาจารย์"}</span>${last?`<div class="muted" style="font-size:13px">ห้องเกมล่าสุด ${esc(last)}</div>`:""}</div><button class="ghost" id="tOut">ออกจากระบบ</button></div>
+ <div class="tgrid six" style="margin-top:12px">
+  <button class="tile pri" id="tToday"><span class="ic">🏫</span>ห้องเรียนวันนี้<small>เปิดคาบ เช็คชื่อ ปิดคาบ</small></button>
+  ${ta?"":`<button class="tile" id="tStart"><span class="ic">▶️</span>เกมทีม<small>สร้างห้อง ให้นิสิตใส่รหัส</small></button>
+  <button class="tile" id="tDemo"><span class="ic">🎮</span>ทดลองเล่น<small>ทุกเกม ไม่บันทึกคะแนน</small></button>
+  <button class="tile" id="tCh"><span class="ic">🗂️</span>เกมรายบท<small>เปิด–ปิด ดูผล</small></button>
+  <button class="tile" id="tScore"><span class="ic">📊</span>คะแนน<small>รายชื่อ คะแนน เกรด</small></button>
+  <button class="tile" id="tSet"><span class="ic">⚙️</span>ตั้งค่ารายวิชา<small>ห้องเรียน น้ำหนักคะแนน รหัสผูก</small></button>`}
+ </div>
+ <p class="muted" style="font-size:13px;text-align:center;margin-top:12px">${FBOK?(CONN?"🟢 เชื่อมต่อแล้ว":`<span class="wait"></span> กำลังเชื่อมต่อ…`):"⚠️ ออฟไลน์"}</p>`;
+ $("tOut").onclick=()=>signOutNow();$("tToday").onclick=()=>openToday();
+ if(!ta){$("tStart").onclick=openStartClass;$("tDemo").onclick=openDemoHub;$("tCh").onclick=()=>openXtAdmin();$("tScore").onclick=openRoster;$("tSet").onclick=()=>openCourseSettings()}}
+
+/* ---------- ผู้สอน: ห้องเรียนวันนี้ ---------- */
+const TD={id:null,codeT:null,attRef:null};
+function tdStop(){if(TD.codeT){clearInterval(TD.codeT);TD.codeT=null}if(TD.attRef){TD.attRef.off();TD.attRef=null}}
+async function openToday(sec){tdStop();openSheet(`<div class="sh"><h2>🏫 ห้องเรียนวันนี้</h2><button onclick="tdStop();closeSheet()">ปิด</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
+ await v20Load(true);const CO=v20Course();const secs=Object.keys(CO.sections);sec=sec||store.get("sq.tsec")||secs[0];if(!CO.sections[sec])sec=secs[0];store.set("sq.tsec",sec);
+ let ss={},open=null,ro={};try{ss=(await DB.ref("sessions").once("value")).val()||{};open=(await DB.ref("attOpen/"+sec).once("value")).val();ro=(await DB.ref("rosters").once("value")).val()||{}}catch(e){toast("อ่านข้อมูลไม่ได้ ตรวจสิทธิ์")}
+ const room=CO.sections[sec];const secSel=secs.length>1?`<select id="tdSec">${secs.map(s=>`<option value="${s}"${s===sec?" selected":""}>${esc(CO.sections[s].name||s)}</option>`).join("")}</select>`:"";
+ if(room.lat==null){openSheet(`<div class="sh"><h2>🏫 ห้องเรียนวันนี้</h2><button onclick="closeSheet()">ปิด</button></div><p class="lead">ยังไม่ได้ตั้งพิกัดห้องเรียน</p><p>ไปที่ ตั้งค่ารายวิชา แล้วกด “ใช้ตำแหน่งปัจจุบัน” ขณะอยู่ในห้องเรียน</p>${AUTH.teacher?`<button class="pri big" onclick="openCourseSettings()">ไปตั้งค่ารายวิชา</button>`:""}`);return}
+ if(open&&ss[open]?.state==="open")return tdOpenView(open,ss[open],ro,CO,secSel);
+ const wk=Math.max(1,v20Week(CO.startDate,Date.now()));const prev=Object.values(ss).filter(x=>x.sec===sec).sort((a,b)=>b.wk-a.wk)[0];const ex=ss["s"+sec+"w"+wk];
+ const defCh=ex?.ch||(prev?Math.min(12,prev.wk===wk?prev.ch:prev.ch):1);
+ openSheet(`<div class="sh"><h2>🏫 ห้องเรียนวันนี้</h2><button onclick="closeSheet()">ปิด</button></div>${secSel}
+ <div class="kv"><span>สัปดาห์</span><select id="tdWk">${Array.from({length:CO.weeks},(_,i)=>i+1).map(w=>`<option value="${w}"${w===wk?" selected":""}>สัปดาห์ ${w} · ${thDate(v20Date(CO.startDate,w))}${ss["s"+sec+"w"+w]?" · มีแล้ว":""}</option>`).join("")}</select>
+ <span>บทที่สอน</span><select id="tdCh">${Object.keys(CH_T).map(c=>`<option value="${c}"${+c===defCh?" selected":""}>บทที่ ${c} ${esc(CH_T[c])}</option>`).join("")}</select>
+ <span>วิธีเช็คชื่อ</span><select id="tdMode"><option value="gps">GPS ในรัศมีห้อง</option><option value="both">GPS หรือรหัสคาบบนจอ</option></select></div>
+ <p class="muted" style="font-size:13px">ห้อง ${esc(room.room||"")} · รัศมี ${room.radius} เมตร · ตรงเวลา ${CO.att.onTime} นาที · สายถึง ${CO.att.late} นาทีหลังกดเปิด</p>
+ ${ex?.state==="closed"?`<p class="note warn">สัปดาห์นี้ปิดคาบไปแล้ว เปิดอีกครั้งได้ (คนที่ถูกบันทึกขาดเช็คชื่อได้ในสถานะ “สาย”)</p>`:""}
+ <button class="pri big" id="bTdOpen">▶ เปิดเช็คชื่อ</button>
+ <button class="ghost" id="bTdHist" style="margin-top:8px">📋 ประวัติการเข้าเรียน · ใบลา · ใบเซ็นชื่อย้อนหลัง</button>`);
+ $("tdSec")&&($("tdSec").onchange=e=>openToday(e.target.value));
+ $("bTdHist").onclick=()=>openAttHistory(sec);
+ $("bTdOpen").onclick=async()=>{$("bTdOpen").disabled=true;try{const s=await fnCall("openSession",{sec,wk:+$("tdWk").value,ch:+$("tdCh").value,mode:$("tdMode").value});toast("เปิดเช็คชื่อแล้ว");openToday(sec)}catch(e){toast(e.message);$("bTdOpen").disabled=false}}}
+function tdOpenView(id,s,ro,CO,secSel){TD.id=id;const sec=s.sec,def=Object.keys(CO.sections)[0];
+ const L=Object.entries(ro).filter(([,r])=>!r.demo&&v20Sec(r,CO)===sec).sort((a,b)=>a[0].localeCompare(b[0]));
+ openSheet(`<div class="sh"><h2>🏫 สัปดาห์ ${s.wk} · บทที่ ${s.ch}</h2><button onclick="tdStop();closeSheet()">ปิด</button></div>${secSel}
+ <p class="muted" style="margin:0">เปิด ${fmtT(s.openAt)} · ตรงเวลาถึง ${fmtT(s.onTimeUntil)} · สายถึง ${fmtT(s.lateUntil)}</p>
+ ${s.mode==="both"?`<div class="tbox" style="margin:8px 0;text-align:center"><div class="muted">รหัสคาบ (เปลี่ยนทุก 30 วินาที)</div><div class="attcode" id="tdCode">······</div></div>`:""}
+ <div class="attsum" id="tdCount" style="margin:8px 0"></div>
+ <input id="tdNote" placeholder="เหตุผลเมื่อแก้สถานะ (ถ้ามี)" style="width:100%;margin-bottom:6px">
+ <div class="tw"><table class="score"><tr><th>รหัส</th><th>ชื่อ</th><th>สถานะ</th><th>เวลา</th></tr>${L.map(([sid,r])=>`<tr><td>${esc(sid)}</td><td>${esc(r.n||"")}</td><td><select data-ts="${esc(sid)}"><option value="">–</option>${Object.entries(ST_T).map(([k,t])=>`<option value="${k}">${t}</option>`).join("")}</select></td><td id="tt${esc(sid)}" class="muted">–</td></tr>`).join("")}</table></div>
+ <div class="row" style="gap:8px;margin-top:10px"><button class="big" id="bTdHist2" style="flex:1">📋 ประวัติ</button><button class="pri big" id="bTdClose" style="flex:1">■ ปิดคาบ</button></div>
+ <p class="muted" style="font-size:12.5px">ปิดคาบแล้ว คนที่ไม่ได้เช็คชื่อและไม่มีใบลาที่อนุมัติจะเป็น “ขาด”</p>`);
+ $("tdSec")&&($("tdSec").onchange=e=>{tdStop();openToday(e.target.value)});
+ const paint=at=>{const n={present:0,late:0,absent:0,leave:0,none:0};for(const [sid] of L){const a=at?.[sid];const sel=document.querySelector(`[data-ts="${sid}"]`);if(sel&&document.activeElement!==sel)sel.value=a?.st||"";const t=$("tt"+sid);if(t)t.innerHTML=a?`${fmtT(a.at)}${a.via==="code"?" · รหัส":a.via==="gps"&&a.d!=null?` · ${a.d} ม.`:a.by&&a.by!=="auto"?" · แก้โดยผู้สอน":""}`:"–";n[a?.st||"none"]++}
+  $("tdCount")&&($("tdCount").innerHTML=`<span>มา <b>${n.present}</b></span><span>สาย <b>${n.late}</b></span><span>ขาด ${n.absent}</span><span>ลา ${n.leave}</span><span>ยังไม่เช็ค ${n.none}</span><span>ทั้งหมด ${L.length}</span>`)};
+ TD.attRef=DB.ref("att/"+id);TD.attRef.on("value",sn=>paint(sn.val()||{}));
+ document.querySelectorAll("[data-ts]").forEach(sel=>sel.onchange=async()=>{if(!sel.value)return;try{await fnCall("teacherCheckIn",{id,sid:sel.dataset.ts,st:sel.value,note:$("tdNote").value});toast("บันทึกแล้ว")}catch(e){toast(e.message)}});
+ if(s.mode==="both"){const tick=async()=>{if(!$("tdCode")){tdStop();return}try{const r=await fnCall("sessionCode",{id});$("tdCode").textContent=r.code}catch(e){}};tick();TD.codeT=setInterval(tick,5000)}
+ $("bTdHist2").onclick=()=>{tdStop();openAttHistory(sec)};
+ $("bTdClose").onclick=async()=>{if(!confirmNb("ปิดคาบนี้?"))return;try{const r=await fnCall("closeSession",{id});tdStop();toast(`ปิดคาบแล้ว · ขาด ${r.absent} คน`);openToday(sec)}catch(e){toast(e.message)}}}
+
+/* ---------- ผู้สอน: ประวัติการเข้าเรียน ใบลา และใบเซ็นชื่อย้อนหลัง ---------- */
+async function openAttHistory(sec){openSheet(`<div class="sh"><h2>📋 การเข้าเรียน</h2><button onclick="closeSheet()">ปิด</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
+ await v20Load(true);const CO=v20Course();sec=sec||Object.keys(CO.sections)[0];let ss={},at={},ro={},lv={};
+ try{ss=(await DB.ref("sessions").once("value")).val()||{};at=(await DB.ref("att").once("value")).val()||{};ro=(await DB.ref("rosters").once("value")).val()||{};lv=(await DB.ref("attLeave").once("value")).val()||{}}catch(e){toast("อ่านข้อมูลไม่ได้")}
+ const S=Object.entries(ss).filter(([,x])=>x.sec===sec).sort((a,b)=>a[1].wk-b[1].wk);const L=Object.entries(ro).filter(([,r])=>!r.demo&&v20Sec(r,CO)===sec).sort((a,b)=>a[0].localeCompare(b[0]));
+ const sym={present:"✓",late:"ส",absent:"ข",leave:"ล"};
+ const pend=[];for(const [sid,m] of Object.entries(lv))for(const [id,x] of Object.entries(m||{}))if(x.state==="pending"&&ss[id])pend.push({sid,id,x});
+ const used=new Set(S.map(([,x])=>x.wk));const curWk=Math.max(1,v20Week(CO.startDate,Date.now()));
+ const head=`<tr><th>รหัส</th><th>ชื่อ</th>${S.map(([id,x])=>`<th title="${thDate(x.date)} บท ${x.ch}">ส.${x.wk}<br><small>บท ${x.ch}</small></th>`).join("")}<th>คะแนน /${V20.W.att}</th></tr>`;
+ const body=L.map(([sid,r])=>{const sts=[];const cells=S.map(([id,x])=>{const st=at?.[id]?.[sid]?.st;if(st&&x.state==="closed")sts.push(st);return`<td><button data-ce="${id}|${sid}" class="stc st-${st||"none"}">${st?sym[st]:"·"}</button></td>`}).join("");const a=attScoreC(sts,V20.W.att,CO.att.warnAbs);
+  return`<tr><td class="nm">${esc(sid)}</td><td class="nm">${esc(r.n||"")}</td>${cells}<td class="${a.warn?"wsum bad":"wsum"}">${a.score??"–"}${a.warn?" ⚠️":""}</td></tr>`}).join("");
+ openSheet(`<div class="sh"><h2>📋 การเข้าเรียน</h2><button onclick="openToday('${sec}')">กลับ</button></div>
+ <p class="muted" style="margin-top:0">✓ มา · ส สาย · ข ขาด · ล ลา · ⚠️ ขาดเกิน ${CO.att.warnAbs} ครั้ง · กดช่องเพื่อแก้</p>
+ ${pend.length?`<div class="tbox" style="margin-bottom:10px"><b>ใบลารอพิจารณา ${pend.length} รายการ</b>${pend.map(p=>`<div class="hrow"><div class="nm"><b>${esc(p.sid)} ${esc(ro[p.sid]?.n||"")} · สัปดาห์ ${ss[p.id].wk}</b><small>${esc(p.x.reason)}${p.x.link?` · <a href="${esc(p.x.link)}" target="_blank" rel="noopener">หลักฐาน</a>`:""}</small></div><div class="acts"><button class="pri" data-lr="${p.sid}|${p.id}|1">อนุมัติ</button><button data-lr="${p.sid}|${p.id}|0">ไม่อนุมัติ</button></div></div>`).join("")}</div>`:""}
+ <div class="tw"><table class="attgrid">${head}${body||`<tr><td colspan="3" class="muted">ยังไม่มีรายชื่อ</td></tr>`}</table></div>
+ <div id="ceBox" class="tbox" hidden style="margin-top:8px"></div>
+ <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button id="bAttCsv">⬇️ ส่งออก CSV</button></div>
+ ${AUTH.teacher?`<details class="tbox" style="margin-top:10px"><summary><b>บันทึกคาบย้อนหลังจากใบเซ็นชื่อกระดาษ</b></summary>
+  <div class="kv" style="margin-top:8px"><span>สัปดาห์</span><select id="pwWk">${Array.from({length:Math.min(CO.weeks,curWk)},(_,i)=>i+1).filter(w=>!used.has(w)).map(w=>`<option value="${w}">สัปดาห์ ${w} · ${thDate(v20Date(CO.startDate,w))}</option>`).join("")||`<option value="">ไม่มีสัปดาห์ที่ว่าง</option>`}</select>
+  <span>บท</span><select id="pwCh">${Object.keys(CH_T).map(c=>`<option value="${c}">บทที่ ${c}</option>`).join("")}</select></div>
+  <button id="bPwNew" style="margin-top:6px">สร้างคาบย้อนหลัง</button>
+  <div class="kv" style="margin-top:10px"><span>คาบ</span><select id="ppId">${S.map(([id,x])=>`<option value="${id}">สัปดาห์ ${x.wk} · บท ${x.ch}</option>`).join("")}</select></div>
+  <textarea id="ppSids" rows="4" placeholder="วางรหัสนิสิตที่เซ็นชื่อ บรรทัดละคน หรือคั่นด้วยช่องว่าง" style="width:100%;margin-top:6px"></textarea>
+  <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ppRest" checked> คนที่ไม่อยู่ในรายการ = ขาด</label>
+  <button class="pri" id="bPpImp" style="margin-top:6px">นำเข้า</button></details>`:""}`);
+ document.querySelectorAll("[data-lr]").forEach(b=>b.onclick=async()=>{const [sid,id,ok]=b.dataset.lr.split("|");try{await fnCall("leaveReview",{sid,id,ok:ok==="1"});toast("บันทึกแล้ว");openAttHistory(sec)}catch(e){toast(e.message)}});
+ document.querySelectorAll("[data-ce]").forEach(b=>b.onclick=()=>{const [id,sid]=b.dataset.ce.split("|");const box=$("ceBox");box.hidden=false;
+  box.innerHTML=`<b>${esc(sid)} ${esc(ro[sid]?.n||"")} · สัปดาห์ ${ss[id].wk}</b><div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><select id="ceSt">${Object.entries(ST_T).map(([k,t])=>`<option value="${k}"${at?.[id]?.[sid]?.st===k?" selected":""}>${t}</option>`).join("")}</select><input id="ceNote" placeholder="เหตุผล" style="flex:1;min-width:140px"><button class="pri" id="bCeSave">บันทึก</button></div>`;
+  $("bCeSave").onclick=async()=>{try{await fnCall("teacherCheckIn",{id,sid,st:$("ceSt").value,note:$("ceNote").value});toast("บันทึกแล้ว");openAttHistory(sec)}catch(e){toast(e.message)}}});
+ $("bAttCsv").onclick=()=>{const rows=[["รหัส","ชื่อ",...S.map(([,x])=>`สัปดาห์${x.wk}(บท${x.ch})`),"มา","สาย","ขาด","ลา","คะแนน"]];
+  for(const [sid,r] of L){const sts=[];const c=S.map(([id,x])=>{const st=at?.[id]?.[sid]?.st;if(st&&x.state==="closed")sts.push(st);return st?ST_T[st]:""});const a=attScoreC(sts,V20.W.att,CO.att.warnAbs);rows.push([sid,r.n||"",...c,a.n.present,a.n.late,a.n.absent,a.n.leave,a.score??""])}
+  const csv="﻿"+rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",")).join("\n");const aEl=document.createElement("a");aEl.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));aEl.download=`attendance_${sec}.csv`;aEl.click()};
+ $("bPwNew")&&($("bPwNew").onclick=async()=>{if(!$("pwWk").value)return;try{await fnCall("createPastSession",{sec,wk:+$("pwWk").value,ch:+$("pwCh").value});toast("สร้างคาบย้อนหลังแล้ว");openAttHistory(sec)}catch(e){toast(e.message)}});
+ $("bPpImp")&&($("bPpImp").onclick=async()=>{const sids=$("ppSids").value.split(/[\s,;]+/).filter(Boolean);if(!$("ppId").value||!sids.length){toast("เลือกคาบและวางรหัสนิสิต");return}
+  try{const r=await fnCall("importPaperAttendance",{id:$("ppId").value,sids,restAbsent:$("ppRest").checked});toast(`นำเข้า ${r.n} คน · ขาด ${r.ab} คน${r.unknown.length?` · ไม่พบ ${r.unknown.join(", ")}`:""}`);openAttHistory(sec)}catch(e){toast(e.message)}})}
+
+/* ---------- ผู้สอน: ตั้งค่ารายวิชา ---------- */
+async function openCourseSettings(){openSheet(`<div class="sh"><h2>⚙️ ตั้งค่ารายวิชา</h2><button onclick="closeSheet()">ปิด</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
+ await v20Load(true);const CO=v20Course();const sec=Object.keys(CO.sections)[0];const R=CO.sections[sec];const W=V20.W;let tas={};try{tas=(await DB.ref("taInfo").once("value")).val()||{}}catch(e){}
+ openSheet(`<div class="sh"><h2>⚙️ ตั้งค่ารายวิชา</h2><button onclick="closeSheet()">ปิด</button></div>
+ <details class="tbox" open><summary><b>ภาคเรียนและห้องเรียน</b></summary><div class="kv" style="margin-top:8px">
+  <span>วันเรียนครั้งแรก</span><input type="date" id="csStart" value="${esc(CO.startDate)}">
+  <span>จำนวนครั้ง</span><input type="number" id="csWeeks" min="1" max="20" value="${CO.weeks}">
+  <span>รหัสกลุ่มเรียน</span><input id="csSec" value="${esc(sec)}" maxlength="8">
+  <span>ชื่อกลุ่ม</span><input id="csName" value="${esc(R.name||"")}">
+  <span>วัน เวลา</span><div class="row" style="gap:6px"><select id="csDay">${["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"].map((d,i)=>`<option value="${i}"${+R.day===i?" selected":""}>${d}</option>`).join("")}</select><input id="csT1" value="${esc(R.start)}" style="width:70px"><input id="csT2" value="${esc(R.end)}" style="width:70px"></div>
+  <span>ห้อง</span><input id="csRoom" value="${esc(R.room||"")}" placeholder="เช่น SC1-301">
+  <span>พิกัดห้อง</span><div class="row" style="gap:6px;flex-wrap:wrap"><input id="csLat" value="${R.lat??""}" placeholder="ละติจูด" style="width:110px"><input id="csLng" value="${R.lng??""}" placeholder="ลองจิจูด" style="width:110px"><button id="bCsHere">📍 ใช้ตำแหน่งปัจจุบัน</button></div>
+  <span>รัศมี (เมตร)</span><input type="number" id="csRad" min="20" max="500" value="${R.radius||50}">
+  <span>ตรงเวลา (นาที)</span><input type="number" id="csOn" value="${CO.att.onTime}">
+  <span>สายถึง (นาที)</span><input type="number" id="csLate" value="${CO.att.late}">
+  <span>เตือนเมื่อขาดเกิน</span><input type="number" id="csWarn" value="${CO.att.warnAbs}"></div>
+  <p class="muted" style="font-size:12.5px" id="csDays"></p><button class="pri" id="bCsSave">บันทึกห้องเรียน</button></details>
+ <details class="tbox" style="margin-top:10px"><summary><b>น้ำหนักคะแนน (รวม 100)</b></summary><div class="kv" style="margin-top:8px">
+  <span>Active Learning</span><input type="number" data-w="al" value="${W.al}"><span>สอบปลายภาค</span><input type="number" data-w="fin" value="${W.fin}"><span>Capstone</span><input type="number" data-w="cap" value="${W.cap}">
+  <span>การเข้าเรียน</span><input type="number" data-w="att" value="${W.att}"><span>กิจกรรมในคาบ</span><input type="number" data-w="live" value="${W.live}"></div>
+  <p>รวม <span id="wTot" class="wsum"></span></p><button class="pri" id="bWSave">บันทึกน้ำหนัก</button></details>
+ <details class="tbox" style="margin-top:10px"><summary><b>รหัสผูกบัญชี (นิสิตที่ไม่ได้ใช้อีเมล @tsu.ac.th)</b></summary>
+  <p class="muted" style="font-size:13px">อีเมล &lt;รหัสนิสิต&gt;@tsu.ac.th ผูกได้ทันที ส่วนบัญชีอื่นต้องใช้รหัส 8 ตัว รหัสเดิมที่ยังไม่ใช้จะถูกยกเลิกเมื่อออกใหม่</p>
+  <button id="bCodes">ออกรหัสให้ทุกคนที่ยังไม่ผูก</button><div id="codeOut"></div>
+  <div class="row" style="gap:6px;margin-top:10px"><input id="ubSid" placeholder="รหัสนิสิตที่จะยกเลิกการผูก" style="flex:1"><button id="bUnbind">ยกเลิกการผูก</button></div></details>
+ <details class="tbox" style="margin-top:10px"><summary><b>นำเข้ารายชื่อ (CSV: รหัส,ชื่อ,กลุ่ม)</b></summary>
+  <textarea id="riCsv" rows="5" placeholder="6800000001,นางสาวกานดา ใจดี,01" style="width:100%;margin-top:6px"></textarea><button id="bRiPrev">ตรวจก่อนบันทึก</button><div id="riOut"></div></details>
+ <details class="tbox" style="margin-top:10px"><summary><b>ผู้ช่วยสอน</b></summary>
+  ${Object.entries(tas).map(([uid,t])=>`<div class="hrow"><div class="nm"><b>${esc(t.n||t.email)}</b><small>${esc(t.email)}</small></div><div class="acts"><button data-tar="${esc(t.email)}">ถอนสิทธิ์</button></div></div>`).join("")||`<p class="muted">ยังไม่มีผู้ช่วยสอน</p>`}
+  <p class="muted" style="font-size:13px">ผู้ช่วยสอนเปิดคาบ เช็คชื่อแทน และดูการเข้าเรียนได้ แต่แก้น้ำหนักคะแนนและปล่อยคะแนนไม่ได้ ต้องเข้าสู่ระบบ Sprint Quest หนึ่งครั้งก่อนเพิ่ม</p>
+  <div class="row" style="gap:6px"><input id="taEmail" placeholder="อีเมลบัญชี Google ของผู้ช่วยสอน" style="flex:1"><button id="bTaAdd">เพิ่ม</button></div></details>`);
+ const days=()=>{const n=+$("csWeeks").value||16,s=$("csStart").value;if(!s)return;const d0=new Date(s+"T00:00:00Z");const wd=["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"][d0.getUTCDay()];
+  const last=v20Date(s,n);$("csDays").innerHTML=`ครั้งแรก ${thDate(s)} (วัน${wd}) · ครั้งสุดท้าย ${thDate(last)} · รวม ${n} ครั้ง${d0.getUTCDay()!==+$("csDay").value?` · <b style="color:#b3261e">วันที่เลือกไม่ใช่วัน${["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"][+$("csDay").value]}</b>`:""}`};
+ ["csStart","csWeeks","csDay"].forEach(k=>$(k).oninput=days);days();
+ $("bCsHere").onclick=async()=>{$("bCsHere").disabled=true;try{const p=await getPos();$("csLat").value=p.lat.toFixed(6);$("csLng").value=p.lng.toFixed(6);toast(`ได้ตำแหน่งแล้ว (คลาดเคลื่อนราว ${Math.round(p.acc)} เมตร)`)}catch(e){toast(e.message)}$("bCsHere").disabled=false};
+ $("bCsSave").onclick=async()=>{const s=$("csSec").value.trim()||"01";try{await fnCall("setCourse",{startDate:$("csStart").value,weeks:+$("csWeeks").value,sections:{[s]:{name:$("csName").value,day:+$("csDay").value,start:$("csT1").value,end:$("csT2").value,room:$("csRoom").value,lat:$("csLat").value,lng:$("csLng").value,radius:+$("csRad").value}},att:{onTime:+$("csOn").value,late:+$("csLate").value,warnAbs:+$("csWarn").value}});await v20Load(true);toast("บันทึกห้องเรียนแล้ว")}catch(e){toast(e.message)}};
+ const tot=()=>{const t=[...document.querySelectorAll("[data-w]")].reduce((a,i)=>a+(+i.value||0),0);$("wTot").textContent=t;$("wTot").className="wsum"+(t===100?"":" bad")};document.querySelectorAll("[data-w]").forEach(i=>i.oninput=tot);tot();
+ $("bWSave").onclick=async()=>{const w={};document.querySelectorAll("[data-w]").forEach(i=>w[i.dataset.w]=+i.value);try{await fnCall("setWeights",w);await v20Load(true);toast("บันทึกน้ำหนักแล้ว · กดอัปเดตคะแนนในหน้า คะแนน เพื่อคำนวณใหม่")}catch(e){toast(e.message)}};
+ $("bCodes").onclick=async()=>{try{const r=await fnCall("generateClaimCodes",{});$("codeOut").innerHTML=r.codes.length?`<div class="tw"><table class="score"><tr><th>รหัสนิสิต</th><th>ชื่อ</th><th>รหัสผูก</th></tr>${r.codes.map(c=>`<tr><td>${esc(c.sid)}</td><td>${esc(c.n)}</td><td><b style="font-family:monospace;font-size:16px">${esc(c.code)}</b></td></tr>`).join("")}</table></div><button id="bCodeCsv">⬇️ ส่งออก CSV</button>`:`<p class="muted">ทุกคนผูกบัญชีแล้ว</p>`;
+  $("bCodeCsv")&&($("bCodeCsv").onclick=()=>{const csv="﻿รหัสนิสิต,ชื่อ,รหัสผูก\n"+r.codes.map(c=>[c.sid,c.n,c.code].map(x=>`"${x}"`).join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="claim_codes.csv";a.click()})}catch(e){toast(e.message)}};
+ $("bUnbind").onclick=async()=>{const sid=$("ubSid").value.trim();if(!sid)return;if(!confirmNb(`ยกเลิกการผูกรหัส ${sid}?`))return;try{const r=await fnCall("unbindStudent",{sid});toast(r.was?"ยกเลิกการผูกแล้ว":"รหัสนี้ยังไม่ได้ผูก")}catch(e){toast(e.message)}};
+ const rows=()=>$("riCsv").value.split(/\r?\n/).map(l=>l.split(/[,\t]/).map(x=>x.trim())).filter(c=>c[0]).map(c=>({sid:c[0],n:c[1]||"",sec:c[2]||""}));
+ $("bRiPrev").onclick=async()=>{try{const r=await fnCall("importRoster",{rows:rows(),dry:true});$("riOut").innerHTML=`<p>เพิ่มใหม่ <b>${r.add.length}</b> · แก้ไข <b>${r.edit.length}</b> · ไม่เปลี่ยน ${r.same.length} · ใช้ไม่ได้ ${r.bad.length}${r.bad.length?` (${esc(r.bad.slice(0,8).join(", "))})`:""}</p>${r.add.length+r.edit.length?`<button class="pri" id="bRiGo">ยืนยันบันทึก</button>`:""}`;
+  $("bRiGo")&&($("bRiGo").onclick=async()=>{try{const x=await fnCall("importRoster",{rows:rows()});toast(`บันทึกแล้ว · เพิ่ม ${x.add.length} · แก้ ${x.edit.length}`);$("riOut").innerHTML=""}catch(e){toast(e.message)}})}catch(e){toast(e.message)}};
+ $("bTaAdd").onclick=async()=>{try{await fnCall("setTA",{email:$("taEmail").value,on:true});toast("เพิ่มผู้ช่วยสอนแล้ว");openCourseSettings()}catch(e){toast(e.message)}};
+ document.querySelectorAll("[data-tar]").forEach(b=>b.onclick=async()=>{try{await fnCall("setTA",{email:b.dataset.tar,on:false});toast("ถอนสิทธิ์แล้ว");openCourseSettings()}catch(e){toast(e.message)}})}
+
+/* ---------- ตะขอหลังแสดงผล: โหลดน้ำหนัก และการ์ดการเข้าเรียนในหน้านิสิต ---------- */
+function v20Hook(){if(AUTH.u&&!V20.loaded)v20Load().then(()=>{});if($("stAtt")&&!$("stAtt").dataset.v20){$("stAtt").dataset.v20=1;v20Load().then(v20StudentAtt)}}
+
 /* ---------- teacher: roster · chapter scores · grade path ---------- */
 const RO={tab:"sum",ch:4,C:null};
 async function roLoad(){let ro={},pf={},mk={},op={};try{ro=(await DB.ref("rosters").once("value")).val()||{};pf=(await DB.ref("portfolio").once("value")).val()||{};mk=(await DB.ref("marks").once("value")).val()||{};op=(await DB.ref("xt/open").once("value")).val()||{}}catch(e){toast("อ่านข้อมูลไม่ได้ ตรวจกฎความปลอดภัยและสิทธิ์อาจารย์")}
- RO.C=xtCtx(ro,pf,mk,op);RO.list=Object.entries(ro).sort((a,b)=>a[0].localeCompare(b[0]));RO.S={};for(const [sid,r] of RO.list)RO.S[sid]=summary(r.uid,sid,RO.C)}
+ RO.C=xtCtx(ro,pf,mk,op);await v20Ctx(RO.C);RO.list=Object.entries(ro).sort((a,b)=>a[0].localeCompare(b[0]));RO.S={};for(const [sid,r] of RO.list)RO.S[sid]=summary(r.uid,sid,RO.C)}
 async function publishAll(silent){const up={};for(const [sid] of RO.list)up[sid+"/calc"]=RO.S[sid];try{await DB.ref("marks").update(up);if(!silent)toast("อัปเดตคะแนนให้นิสิตแล้ว")}catch(e){toast("อัปเดตไม่ได้ ต้องเป็นบัญชีอาจารย์")}}
 async function openRoster(){openSheet(`<div class="sh"><h2>👥 รายชื่อนิสิต</h2><button onclick="closeSheet()">ปิด</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);await roLoad();roRender()}
 function roRender(){const L=RO.list,C=RO.C,tab=RO.tab;
@@ -1519,7 +1777,7 @@ function renderStudent(app){const u=AUTH.u,ok=FBOK&&window.firebase&&firebase.au
  else if(!AUTH.ready)body=`<div class="card"><span class="wait"></span> กำลังตรวจสอบบัญชี…</div>`;
  else if(!u)body=`<div class="card col stcard"><h2>ยินดีต้อนรับ</h2><p class="muted" style="margin:0">ใช้บัญชี Google ของตัวเอง ระบบจะเก็บคะแนนเกม Exit ticket และแฟ้มสะสมงานของทุกบทไว้ให้คุณคนเดียว</p>
    ${inLine?`<div class="note warn" style="margin:0"><b>กำลังเปิดในแอป LINE หรือ Facebook</b><br>Google ไม่อนุญาตให้เข้าสู่ระบบในแอปเหล่านี้ กด ⋯ มุมขวาบน แล้วเลือก “เปิดในเบราว์เซอร์” หรือคัดลอกลิงก์ไปเปิดใน Chrome/Safari</div><button class="big" id="stCopy">คัดลอกลิงก์</button>`:`<button class="big gbtn pri" id="bSignIn"><span class="g">G</span> เข้าสู่ระบบด้วย Google</button>`}
-   <ol class="ststeps"><li>เข้าสู่ระบบด้วย Google</li><li>กรอกรหัสนิสิต 10 หลัก (ทำครั้งเดียว)</li><li>เล่นเกม ทำ Exit ticket และดูรายงานผลของตัวเอง</li></ol></div>`;
+   <ol class="ststeps"><li>เข้าสู่ระบบด้วย Google (แนะนำอีเมล รหัสนิสิต@tsu.ac.th)</li><li>กรอกรหัสนิสิต 10 หลัก (ทำครั้งเดียว)</li><li>เล่นเกม ทำ Exit ticket และดูรายงานผลของตัวเอง</li></ol></div>`;
  else if(AUTH.teacher&&!AUTH.prof?.sid)body=`<div class="card col stcard"><h2>บัญชีผู้สอน</h2><p style="margin:0">${esc(u.displayName||"")} เป็นบัญชีอาจารย์ ใช้หน้าหลักเพื่อคุมเกมและดูคะแนนนิสิต</p><a class="btnlink pri" href="${APP_BASE}">ไปหน้าหลักของอาจารย์</a><button class="ghost" id="bSignOut">ออกจากระบบ</button></div>`;
  else if(!AUTH.prof?.sid)body=`<div class="card col stcard"><div class="stwho"><div><b>${esc(u.displayName||"")}</b><div class="muted" style="font-size:13px">${esc(u.email||"")}</div></div><button class="ghost" id="bSignOut">ใช้บัญชีอื่น</button></div>
    <h2 style="margin-top:4px">ยืนยันตัวตนด้วยรหัสนิสิต</h2><p class="muted" style="margin:0">ทำครั้งเดียว ระบบตรวจกับรายชื่อนิสิตที่อาจารย์นำเข้า และรหัสหนึ่งผูกได้กับบัญชี Google เดียว</p>
@@ -1527,6 +1785,7 @@ function renderStudent(app){const u=AUTH.u,ok=FBOK&&window.firebase&&firebase.au
    <p class="muted" style="font-size:12.5px;margin:0">ถ้าระบบแจ้งว่าไม่พบรหัส หรือรหัสถูกผูกกับบัญชีอื่นแล้ว แจ้งอาจารย์ผู้สอน</p></div>`;
  else body=`<div class="card col stcard"><div class="stwho"><div><div class="muted" style="font-size:13px">สวัสดี</div><b style="font-size:18px">${esc(u.displayName||"")}</b><div class="muted" style="font-size:13px">รหัสนิสิต ${esc(AUTH.prof.sid)}</div></div><button class="ghost" id="bSignOut">ออกจากระบบ</button></div>
    <div id="stSum" class="stsum"><span class="wait"></span> กำลังโหลดคะแนน…</div></div>
+  <div id="stAtt" class="card col"><span class="wait"></span> กำลังโหลดการเข้าเรียน…</div>
   <div class="stgrid"><button class="sttile" id="stXt"><span>📝</span><b>Exit ticket · เกม</b><small>งานที่อาจารย์เปิดอยู่</small></button><button class="sttile" id="stRp"><span>📁</span><b>แฟ้มสะสมงาน</b><small>รายงานผลและเส้นทางเลื่อนเกรด</small></button><button class="sttile" id="stMap"><span>🗺️</span><b>แผนที่ด่าน</b><small>ด่านและภารกิจแนะนำ</small></button></div>
   <div class="card col"><h2>เข้าห้องเรียน (เกมทีม)</h2><input id="cd" class="code-in" maxlength="5" placeholder="รหัสห้อง 5 ตัว" autocomplete="off" autocapitalize="characters"><button class="big" id="stJoin">เข้าห้องเรียน</button></div>`;
  app.innerHTML=brand+body+`<p class="muted" style="font-size:12.5px;text-align:center">ลิงก์หน้านี้: ${esc(ST_URL)}</p>`;
@@ -1585,12 +1844,12 @@ async function openSG(pv){const u=AUTH.u;SG.pv=!!(pv&&AUTH.teacher);if(!SG.pv){i
  <div class="tbox"><b>โครงการ SCIBeacon</b> LINE Chatbot ร่วมกับ LINE Beacon ที่อาคาร SC1 วัตถุประสงค์: (1) บอกพิกัดพื้นที่ (2) แสดงข้อมูลกิจกรรมเมื่อเข้าใกล้บีคอน (3) ตรวจการเข้าใช้พื้นที่และการเข้าชั้นเรียน</div>
  <h3 class="sgh">รอบ 1 · ขีดเส้นขอบเขต <span class="muted">12 คะแนน</span></h3><p class="muted" style="margin:0 0 6px">สิ่งต่อไปนี้อยู่ในขอบเขตของโครงการหรือไม่</p>
  ${SG.r1.map(i=>`<div class="sgr1"><span>${esc(SG_R1[i][0])}</span><div class="sgio"><label><input type="radio" name="g1_${i}" value="1"> ใน</label><label><input type="radio" name="g1_${i}" value="0"> นอก</label></div></div>`).join("")}
- <h3 class="sgh">รอบ 2 · Requirement ที่ทดสอบได้ <span class="muted">6 คะแนน</span></h3>
+ <h3 class="sgh">รอบ 2 · ความต้องการที่ทดสอบได้ <span class="muted">6 คะแนน</span></h3><p class="muted" style="margin:0 0 6px">💡 ข้อที่ดีมีตัวเลขหรือเงื่อนไขที่ตรวจได้ทันทีว่าผ่านหรือไม่ผ่าน</p>
  ${SG_R2.map((q,i)=>`<fieldset class="xtq"><legend>${i+1}. ${esc(q[0])}</legend>${opt("g2_"+i,SG.r2[i],q[1])}</fieldset>`).join("")}
- <h3 class="sgh">รอบ 3 · โต๊ะคำขอเปลี่ยนแปลง <span class="muted">6 คะแนน</span></h3><p class="muted" style="margin:0 0 6px">คำขอเข้ามากลางโครงการ คุณจะรับมืออย่างไร</p>
+ <h3 class="sgh">รอบ 3 · โต๊ะคำขอเปลี่ยนแปลง <span class="muted">6 คะแนน</span></h3><p class="muted" style="margin:0 0 6px">คำขอเข้ามากลางโครงการ คุณจะรับมืออย่างไร · 💡 ถามตัวเองก่อนว่าเป็นงานใหม่ งานที่ทีมเพิ่มเอง หรือปัญหาที่ไม่ใช่เรื่องขอบเขต</p>
  ${SG_R3.map((q,i)=>`<fieldset class="xtq"><legend>📨 ${esc(q[0])}</legend>${opt("g3_"+i,SG.r3[i],q[1])}</fieldset>`).join("")}
- <h3 class="sgh">รอบ 4 · ประกอบ User Story <span class="muted">6 คะแนน</span></h3>
- ${SG_R4.map((q,i)=>`<fieldset class="xtq"><legend>เรื่องที่ ${i+1}: ${esc(q.c)}</legend><div class="muted" style="font-size:13px;margin:2px 0">ก. เลือก user story ที่เขียนถูกที่สุด</div>${opt("g4s_"+i,SG.r4[i][0],q.s)}<div class="muted" style="font-size:13px;margin:8px 0 2px">ข. เลือกเกณฑ์ยอมรับ (Given/When/Then) ที่ตรงกับเรื่องนี้</div>${opt("g4a_"+i,SG.r4[i][1],q.a)}</fieldset>`).join("")}
+ <h3 class="sgh">รอบ 4 · ประกอบ User Story <span class="muted">6 คะแนน</span></h3><p class="muted" style="margin:0 0 6px">💡 Story ที่ดี: ในฐานะ [ใคร] ฉันต้องการ [ทำอะไร] เพื่อ [ได้ประโยชน์อะไร] · เกณฑ์ยอมรับต้องวัดได้</p>
+ ${SG_R4.map((q,i)=>`<fieldset class="xtq"><legend>เรื่องที่ ${i+1}: ${esc(q.c)}</legend><div class="muted" style="font-size:13px;margin:2px 0">ก. เลือก User Story ที่เขียนถูกที่สุด</div>${opt("g4s_"+i,SG.r4[i][0],q.s)}<div class="muted" style="font-size:13px;margin:8px 0 2px">ข. เลือกเกณฑ์ยอมรับ (Given/When/Then) ที่ตรงกับเรื่องนี้</div>${opt("g4a_"+i,SG.r4[i][1],q.a)}</fieldset>`).join("")}
  <p class="muted" id="sgCnt" style="min-height:1.2em"></p><button class="pri big" id="bSgSend">ส่งคำตอบ (ส่งได้ครั้งเดียว)</button>`);
  const val=n=>{const e=document.querySelector(`input[name="${n}"]:checked`);return e?+e.value:null};
  const collect=()=>({r1:SG_R1.map((_,i)=>val("g1_"+i)),r2:SG_R2.map((_,i)=>val("g2_"+i)),r3:SG_R3.map((_,i)=>val("g3_"+i)),r4:SG_R4.map((_,i)=>[val("g4s_"+i),val("g4a_"+i)])});
@@ -1607,9 +1866,9 @@ function sgResult(r){const A=r.ans||{},mm=Math.floor(r.sec/60),ss=String(r.sec%6
  const pick=(arr,i)=>i>=0?esc(arr[i]):"ไม่ได้ตอบ";
  openSheet(`<div class="sh"><h2>🛡️ ผล Scope Guard</h2><button onclick="closeSheet()">ปิด</button></div>${SG.pv?`<p class="note warn" style="margin:0 0 8px">โหมดทดลองของอาจารย์ · ผลนี้ไม่ถูกบันทึก</p>`:""}
  <p class="lead"><b style="font-size:40px">${r.ok}</b> / ${SG_N} · ใช้เวลา ${mm}:${ss} นาที · คะแนนกิจกรรม ${r.act} / 0.5</p>
- <div class="g4"><div class="tbox">รอบ 1 ขอบเขต <b>${p.r1??"-"}/12</b></div><div class="tbox">รอบ 2 Requirement <b>${p.r2??"-"}/6</b></div><div class="tbox">รอบ 3 คำขอเปลี่ยนแปลง <b>${p.r3??"-"}/6</b></div><div class="tbox">รอบ 4 User Story <b>${p.r4??"-"}/6</b></div></div>
+ <div class="g4"><div class="tbox">รอบ 1 ขอบเขต <b>${p.r1??"-"}/12</b></div><div class="tbox">รอบ 2 ความต้องการ <b>${p.r2??"-"}/6</b></div><div class="tbox">รอบ 3 คำขอเปลี่ยนแปลง <b>${p.r3??"-"}/6</b></div><div class="tbox">รอบ 4 User Story <b>${p.r4??"-"}/6</b></div></div>
  <h3 class="sgh">รอบ 1 · ขีดเส้นขอบเขต</h3>${SG_R1.map((q,i)=>{const a=A.r1?.[i],g=a===q[1];return box(g,`<b>${g?"✓":"✗"} ${esc(q[0])}</b><div class="muted" style="font-size:13px">คุณตอบ: ${a===1?"ใน":a===0?"นอก":"ไม่ได้ตอบ"} · เฉลย: <b>${q[1]?"ในขอบเขต":"นอกขอบเขต"}</b> · ${esc(q[2])}</div>`)}).join("")}
- <h3 class="sgh">รอบ 2 · Requirement ที่ทดสอบได้</h3>${SG_R2.map((q,i)=>{const a=A.r2?.[i]??-1,g=a===0;return box(g,`<b>${g?"✓":"✗"} ${esc(q[0])}</b><div class="muted" style="font-size:13px">คุณตอบ: ${pick(q[1],a)}${g?"":`<br>เฉลย: <b>${esc(q[1][0])}</b>`}<br>${esc(q[2])}</div>`)}).join("")}
+ <h3 class="sgh">รอบ 2 · ความต้องการที่ทดสอบได้</h3>${SG_R2.map((q,i)=>{const a=A.r2?.[i]??-1,g=a===0;return box(g,`<b>${g?"✓":"✗"} ${esc(q[0])}</b><div class="muted" style="font-size:13px">คุณตอบ: ${pick(q[1],a)}${g?"":`<br>เฉลย: <b>${esc(q[1][0])}</b>`}<br>${esc(q[2])}</div>`)}).join("")}
  <h3 class="sgh">รอบ 3 · โต๊ะคำขอเปลี่ยนแปลง</h3>${SG_R3.map((q,i)=>{const a=A.r3?.[i]??-1,g=a===0;return box(g,`<b>${g?"✓":"✗"} ${esc(q[0])}</b><div class="muted" style="font-size:13px">คุณตอบ: ${pick(q[1],a)}${g?"":`<br>เฉลย: <b>${esc(q[1][0])}</b>`}<br>${esc(q[2])}</div>`)}).join("")}
  <h3 class="sgh">รอบ 4 · ประกอบ User Story</h3>${SG_R4.map((q,i)=>{const [s,a]=A.r4?.[i]||[-1,-1];return box(s===0&&a===0,`<b>เรื่องที่ ${i+1}: ${esc(q.c)}</b><div style="font-size:13.5px">${s===0?"✓":"✗"} story: ${pick(q.s,s)}${s===0?"":`<br><span class="muted">เฉลย: <b>${esc(q.s[0])}</b></span>`}</div><div style="font-size:13.5px">${a===0?"✓":"✗"} เกณฑ์ยอมรับ: ${pick(q.a,a)}${a===0?"":`<br><span class="muted">เฉลย: <b>${esc(q.a[0])}</b></span>`}</div><div class="muted" style="font-size:13px">${esc(q.w)}</div>`)}).join("")}
  ${SG.pv?`<button class="big" onclick="openXtAdmin()">กลับไปหน้าจัดการ</button>`:`<button class="big" onclick="openGap()">📁 ดูแฟ้มสะสมงานและรายงานผล</button>`}`)}
@@ -1860,12 +2119,12 @@ const myRole=()=>MODE==="teacher"?-1:(me()?.r??-1);
 const av=(p,i)=>`<span class="av" style="background:${p.r>=0?ROLES[p.r].c:PLAYERCOLORS[i%8]}">${p.r>=0?ROLES[p.r].a:esc((p.n||"?").slice(0,1))}</span>`;
 const busy=()=>(pending||(paused()&&MODE!=="teacher"))?' disabled':'';
 const mmss=ms=>{const s=Math.max(0,Math.round(ms/1000));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
-function render(){__render();try{pfHook()}catch(e){console.error(e)}const ap=$("app");if(ap&&!ap.querySelector(".credit"))ap.insertAdjacentHTML("beforeend",creditH());if(!$("sndBtn")){document.body.insertAdjacentHTML("beforeend",sndBtnH());wireSnd()}}
+function render(){__render();try{pfHook()}catch(e){console.error(e)}try{v20Hook()}catch(e){console.error(e)}const ap=$("app");if(ap&&!ap.querySelector(".credit"))ap.insertAdjacentHTML("beforeend",creditH());if(!$("sndBtn")){document.body.insertAdjacentHTML("beforeend",sndBtnH());wireSnd()}}
 function __render(){const app=$("app");
  if(view!=="teach")document.body.classList.remove("tm");
  if(view==="teach")return renderTeach(app);
  if(view==="student"||(ST_MODE&&(view==="home"||!MODE)))return renderStudent(app);
- if(view==="home"||!MODE)return (AUTH.teacher&&AUTH.u?renderTHome(app):renderHome(app));
+ if(view==="home"||!MODE)return ((AUTH.teacher||AUTH.ta)&&AUTH.u?renderTHome(app):renderHome(app));
  if(MODE==="teacher"&&view==="teacher")return renderTeacher(app);
  if(MODE==="class"&&CLS?.final)return renderFinal(app);
  if(view==="classlobby")return renderClassLobby(app);
