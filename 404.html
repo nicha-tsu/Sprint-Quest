@@ -1437,7 +1437,7 @@ const fmtT=ms=>ms?new Date(ms).toLocaleTimeString("th-TH",{hour:"2-digit",minute
 const v20Week=(start,ms)=>{const d0=Date.parse(start+"T00:00:00Z"),d=Date.parse(new Date(ms+7*3600e3).toISOString().slice(0,10)+"T00:00:00Z");return Math.floor((d-d0)/(7*864e5))+1};
 const v20Date=(start,wk)=>new Date(Date.parse(start+"T00:00:00Z")+(wk-1)*7*864e5).toISOString().slice(0,10);
 const thDate=d=>{try{return new Date(d+"T00:00:00Z").toLocaleDateString("th-TH",{day:"numeric",month:"short",timeZone:"UTC"})}catch(e){return d}};
-const DEF_COURSE={startDate:"2026-11-05",weeks:16,sections:{"01":{name:"กลุ่ม 01",day:4,start:"09:00",end:"12:00",room:"",lat:null,lng:null,radius:50}},att:{onTime:15,late:45,warnAbs:2}};
+const DEF_COURSE={startDate:"2026-11-05",weeks:16,sections:{"01":{name:"กลุ่ม 01",day:4,start:"09:00",end:"12:00",room:"",lat:null,lng:null,radius:50}},att:{onTime:15,late:45,warnAbs:2,code:"P101"}};
 
 async function v20Load(force){if(V20.loaded&&!force)return;try{const w=(await DB.ref("config/weights").once("value")).val();if(w)V20.W={...V20.W,...w};V20.course=(await DB.ref("config/course").once("value")).val()||null}catch(e){}
  V20.loaded=true;for(const o of OTHERS){if(o[0]==="fin")o[2]=V20.W.fin;if(o[0]==="cap")o[2]=V20.W.cap;if(o[0]==="live")o[2]=V20.W.live}}
@@ -1558,7 +1558,7 @@ function tdOpenView(id,s,ro,CO,secSel){TD.id=id;const sec=s.sec,def=Object.keys(
  const L=Object.entries(ro).filter(([,r])=>!r.demo&&v20Sec(r,CO)===sec).sort((a,b)=>a[0].localeCompare(b[0]));
  openSheet(`<div class="sh"><h2>🏫 สัปดาห์ ${s.wk} · บทที่ ${s.ch}</h2><button onclick="tdStop();closeSheet()">ปิด</button></div>${secSel}
  <p class="muted" style="margin:0">เปิด ${fmtT(s.openAt)} · ตรงเวลาถึง ${fmtT(s.onTimeUntil)} · สายถึง ${fmtT(s.lateUntil)}</p>
- ${s.mode==="both"?`<div class="tbox" style="margin:8px 0;text-align:center"><div class="muted">รหัสคาบ (เปลี่ยนทุก 30 วินาที)</div><div class="attcode" id="tdCode">······</div></div>`:""}
+ ${s.mode==="both"?`<div class="tbox" style="margin:8px 0;text-align:center"><div class="muted">รหัสคาบ</div><div class="attcode" id="tdCode">······</div></div>`:""}
  <div class="attsum" id="tdCount" style="margin:8px 0"></div>
  <input id="tdNote" placeholder="เหตุผลเมื่อแก้สถานะ (ถ้ามี)" style="width:100%;margin-bottom:6px">
  <div class="tw"><table class="score"><tr><th>รหัส</th><th>ชื่อ</th><th>สถานะ</th><th>เวลา</th></tr>${L.map(([sid,r])=>`<tr><td>${esc(sid)}</td><td>${esc(r.n||"")}</td><td><select data-ts="${esc(sid)}"><option value="">–</option>${Object.entries(ST_T).map(([k,t])=>`<option value="${k}">${t}</option>`).join("")}</select></td><td id="tt${esc(sid)}" class="muted">–</td></tr>`).join("")}</table></div>
@@ -1623,6 +1623,7 @@ async function openCourseSettings(){openSheet(`<div class="sh"><h2>⚙️ ตั
   <span>พิกัดห้อง</span><div class="row" style="gap:6px;flex-wrap:wrap"><input id="csLat" value="${R.lat??""}" placeholder="ละติจูด" style="width:110px"><input id="csLng" value="${R.lng??""}" placeholder="ลองจิจูด" style="width:110px"><button id="bCsHere">📍 ใช้ตำแหน่งปัจจุบัน</button></div>
   <span>รัศมี (เมตร)</span><input type="number" id="csRad" min="20" max="500" value="${R.radius||50}">
   <span>ตรงเวลา (นาที)</span><input type="number" id="csOn" value="${CO.att.onTime}">
+  <span>รหัสคาบ (ใช้ตลอดรายวิชา · เว้นว่าง = รหัสเปลี่ยนทุก 30 วินาที)</span><input id="csCode" maxlength="12" autocapitalize="characters" value="${esc(CO.att.code??"P101")}">
   <span>สายถึง (นาที)</span><input type="number" id="csLate" value="${CO.att.late}">
   <span>เตือนเมื่อขาดเกิน</span><input type="number" id="csWarn" value="${CO.att.warnAbs}"></div>
   <p class="muted" style="font-size:12.5px" id="csDays"></p><button class="pri" id="bCsSave">บันทึกห้องเรียน</button></details>
@@ -1644,7 +1645,7 @@ async function openCourseSettings(){openSheet(`<div class="sh"><h2>⚙️ ตั
   const last=v20Date(s,n);$("csDays").innerHTML=`ครั้งแรก ${thDate(s)} (วัน${wd}) · ครั้งสุดท้าย ${thDate(last)} · รวม ${n} ครั้ง${d0.getUTCDay()!==+$("csDay").value?` · <b style="color:#b3261e">วันที่เลือกไม่ใช่วัน${["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"][+$("csDay").value]}</b>`:""}`};
  ["csStart","csWeeks","csDay"].forEach(k=>$(k).oninput=days);days();
  $("bCsHere").onclick=async()=>{$("bCsHere").disabled=true;try{const p=await getPos();$("csLat").value=p.lat.toFixed(6);$("csLng").value=p.lng.toFixed(6);toast(`ได้ตำแหน่งแล้ว (คลาดเคลื่อนราว ${Math.round(p.acc)} เมตร)`)}catch(e){toast(e.message)}$("bCsHere").disabled=false};
- $("bCsSave").onclick=async()=>{const s=$("csSec").value.trim()||"01";try{await fnCall("setCourse",{startDate:$("csStart").value,weeks:+$("csWeeks").value,sections:{[s]:{name:$("csName").value,day:+$("csDay").value,start:$("csT1").value,end:$("csT2").value,room:$("csRoom").value,lat:$("csLat").value,lng:$("csLng").value,radius:+$("csRad").value}},att:{onTime:+$("csOn").value,late:+$("csLate").value,warnAbs:+$("csWarn").value}});await v20Load(true);toast("บันทึกห้องเรียนแล้ว")}catch(e){toast(e.message)}};
+ $("bCsSave").onclick=async()=>{const s=$("csSec").value.trim()||"01";try{await fnCall("setCourse",{startDate:$("csStart").value,weeks:+$("csWeeks").value,sections:{[s]:{name:$("csName").value,day:+$("csDay").value,start:$("csT1").value,end:$("csT2").value,room:$("csRoom").value,lat:$("csLat").value,lng:$("csLng").value,radius:+$("csRad").value}},att:{onTime:+$("csOn").value,late:+$("csLate").value,warnAbs:+$("csWarn").value,code:$("csCode").value}});await v20Load(true);toast("บันทึกห้องเรียนแล้ว")}catch(e){toast(e.message)}};
  const tot=()=>{const t=[...document.querySelectorAll("[data-w]")].reduce((a,i)=>a+(+i.value||0),0);$("wTot").textContent=t;$("wTot").className="wsum"+(t===100?"":" bad")};document.querySelectorAll("[data-w]").forEach(i=>i.oninput=tot);tot();
  $("bWSave").onclick=async()=>{const w={};document.querySelectorAll("[data-w]").forEach(i=>w[i.dataset.w]=+i.value);try{await fnCall("setWeights",w);await v20Load(true);toast("บันทึกน้ำหนักแล้ว · กดอัปเดตคะแนนในหน้า คะแนน เพื่อคำนวณใหม่")}catch(e){toast(e.message)}};
  $("bCodes").onclick=async()=>{try{const r=await fnCall("generateClaimCodes",{});$("codeOut").innerHTML=r.codes.length?`<div class="tw"><table class="score"><tr><th>รหัสนิสิต</th><th>ชื่อ</th><th>รหัสผูก</th></tr>${r.codes.map(c=>`<tr><td>${esc(c.sid)}</td><td>${esc(c.n)}</td><td><b style="font-family:monospace;font-size:16px">${esc(c.code)}</b></td></tr>`).join("")}</table></div><button id="bCodeCsv">⬇️ ส่งออก CSV</button>`:`<p class="muted">ทุกคนผูกบัญชีแล้ว</p>`;
@@ -2229,7 +2230,7 @@ async function v20StudentAtt(){const el=$("stAtt");if(!el||!AUTH.prof?.sid)retur
  const o=r.open;let top="";
  if(o&&V20ME.checked)top=`<div class="attok">✅ เช็คชื่อแล้ว · ${ST_T[o.st]} ${fmtT(o.at)} <span class="muted" style="font-weight:400">สัปดาห์ ${o.wk} · บทที่ ${o.ch}</span></div>`;
  else if(o)top=`<button class="pri attbig" id="bCheckIn">📍 เช็คชื่อเข้าห้อง<br><small style="font-weight:400">สัปดาห์ ${o.wk} · บทที่ ${o.ch} ${esc(CH_T[o.ch]||"")}</small></button>
-  <div id="ciCode" hidden><p class="muted" style="margin:6px 0 4px">อยู่นอกพิกัดหรือ GPS ไม่แม่น ใช้รหัสคาบ 6 หลักบนจอหน้าห้อง</p><div class="row" style="gap:6px"><input id="ciCodeIn" class="code-in" inputmode="numeric" maxlength="6" placeholder="รหัสคาบ" style="flex:1"><button class="big" id="bCiCode">ส่ง</button></div></div><p class="muted" id="ciMsg" style="margin:4px 0 0;font-size:13.5px"></p>`;
+  <div id="ciCode" hidden><p class="muted" style="margin:6px 0 4px">อยู่นอกพิกัดหรือ GPS ไม่แม่น ใช้รหัสคาบบนจอหน้าห้อง</p><div class="row" style="gap:6px"><input id="ciCodeIn" class="code-in" maxlength="12" autocapitalize="characters" autocomplete="off" placeholder="รหัสคาบ" style="flex:1"><button class="big" id="bCiCode">ส่ง</button></div></div><p class="muted" id="ciMsg" style="margin:4px 0 0;font-size:13.5px"></p>`;
  el.innerHTML=top+(r.sum.warn?`<div class="attwarn">⚠️ ขาดเรียน ${r.sum.n.absent} ครั้ง (เกิน ${v20Course().att.warnAbs} ครั้ง) โปรดติดต่ออาจารย์ผู้สอน</div>`:"");
  if($("bCheckIn"))$("bCheckIn").onclick=()=>v20DoCheckIn(o);if($("bCiCode"))$("bCiCode").onclick=()=>v20DoCheckIn(o,$("ciCodeIn").value.trim());
  stActs()}
@@ -2299,7 +2300,7 @@ async function openClass(sec){NAV.back=openClass;tdStop();clsStop();const ta=!AU
  ${secs.length>1?`<select id="clSec">${secs.map(s=>`<option value="${s}"${s===sec?" selected":""}>${esc(CO.sections[s].name||s)}</option>`).join("")}</select>`:""}
  <div class="kv"><span>สัปดาห์</span><select id="clWk">${Array.from({length:CO.weeks},(_,i)=>i+1).map(w=>`<option value="${w}"${w===wk?" selected":""}>สัปดาห์ ${w} · ${thDate(v20Date(CO.startDate,w))}${ss["s"+sec+"w"+w]?" · มีแล้ว":""}</option>`).join("")}</select>
  <span>บทที่สอน</span><select id="clCh">${Object.keys(CH_T).map(c=>`<option value="${c}"${+c===defCh?" selected":""}>บทที่ ${c} ${esc(CH_T[c])}</option>`).join("")}</select>
- <span>เช็คชื่อด้วย</span><select id="clMode"><option value="both">GPS หรือรหัสบนจอ</option><option value="gps">GPS อย่างเดียว</option></select></div>
+ <span>เช็คชื่อด้วย</span><select id="clMode"><option value="both">GPS หรือรหัสคาบ</option><option value="gps">GPS อย่างเดียว</option></select></div>
  ${noRoom?`<p class="note warn">ยังไม่ได้ตั้งพิกัดห้องเรียน เปิดเช็คชื่อไม่ได้ · ไปที่ ⚙️ ตั้งค่า → ข้อมูลรายวิชา → “ใช้ตำแหน่งปัจจุบัน” ขณะอยู่ในห้อง</p>`:`<p class="muted" style="font-size:13px">ห้อง ${esc(room0.room||"")} · รัศมี ${room0.radius} ม. · ตรงเวลา ${CO.att.onTime} นาที · สายถึง ${CO.att.late} นาที</p>`}
  ${ex?.state==="closed"?`<p class="note warn">สัปดาห์นี้ปิดคาบไปแล้ว เปิดอีกครั้งได้</p>`:""}
  <button class="pri big" id="clStart"${noRoom?" disabled":""}>▶ เริ่มคาบ · เปิดเช็คชื่อ</button>
@@ -2315,7 +2316,7 @@ function clsPanel(X){const {S,ch,sec,CO,ro,op,room}=X,ta=!AUTH.teacher&&AUTH.ta;
  openSheet(`<div class="sh"><h2>🏫 บทที่ ${ch}</h2><button onclick="clsStop();NAV.back=null;closeSheet()">ปิด</button></div>
  <div class="cls-h"><b>${esc(CH_T[ch]||"")}</b><span class="muted" style="font-size:13px">${S?`สัปดาห์ ${S.wk} · เปิด ${fmtT(S.openAt)} · สายถึง ${fmtT(S.lateUntil)}`:"ไม่ได้เปิดเช็คชื่อ"}</span></div>
  ${S?`<h3 class="cls-sec">1 · เช็คชื่อ</h3>
- ${S.mode==="both"?`<div class="tbox" style="text-align:center;margin-bottom:6px"><div class="muted">รหัสคาบ (เปลี่ยนทุก 30 วินาที)</div><div class="attcode" id="clCode">······</div></div>`:""}
+ ${S.mode==="both"?`<div class="tbox" style="text-align:center;margin-bottom:6px"><div class="muted" id="clCodeL">รหัสคาบ</div><div class="attcode" id="clCode">······</div></div>`:""}
  <div class="cls-att" id="clAtt"><span>กำลังโหลด…</span></div><button class="ghost" id="clRoster" style="margin-top:6px">👥 รายชื่อ · แก้สถานะรายคน</button>`:`${ta?"":`<button class="ghost" id="clChg" style="margin-top:6px">เปลี่ยนบท</button>`}`}
  <h3 class="cls-sec">${S?"2 · ":""}กิจกรรมตามลำดับสไลด์</h3>
  <div>${acts.map(rowT).join("")}</div>
@@ -2327,7 +2328,7 @@ function clsPanel(X){const {S,ch,sec,CO,ro,op,room}=X,ta=!AUTH.teacher&&AUTH.ta;
  CLX.pfRef=DB.ref("portfolio");CLX.pfRef.on("value",sn=>{const v=sn.val()||{};paintC(Object.values(v))});
  if(S){const ids=new Set(L.map(([s])=>s));CLX.attRef=DB.ref("att/"+S.id);CLX.attRef.on("value",sn=>{const at=sn.val()||{},n={present:0,late:0,absent:0,leave:0};let none=0;for(const s of ids){const st=at[s]?.st;if(st)n[st]++;else none++}
    $("clAtt")&&($("clAtt").innerHTML=`<span>มา <b>${n.present}</b></span><span>สาย <b>${n.late}</b></span><span>ลา ${n.leave}</span><span>ยังไม่เช็ค ${none}</span><span>ทั้งหมด ${N}</span>`)});
-  if(S.mode==="both"){const tick=async()=>{if(!$("clCode")){clsStop();return}try{const r=await fnCall("sessionCode",{id:S.id});$("clCode").textContent=r.code}catch(e){}};tick();CLX.codeT=setInterval(tick,5000)}
+  if(S.mode==="both"){const tick=async()=>{if(!$("clCode")){clsStop();return}try{const r=await fnCall("sessionCode",{id:S.id});$("clCode").textContent=r.code;if(r.fixed){if(CLX.codeT){clearInterval(CLX.codeT);CLX.codeT=null}$("clCodeL").textContent="รหัสคาบ (ใช้ตลอดรายวิชา) · ตั้งใน ⚙️ ตั้งค่า → ข้อมูลรายวิชา"}else $("clCodeL").textContent="รหัสคาบ (เปลี่ยนทุก 30 วินาที)"}catch(e){}};tick();CLX.codeT=setInterval(tick,5000)}
   $("clRoster").onclick=()=>{clsStop();const secSel="";tdOpenView(S.id,S,ro,CO,secSel);const hb=document.querySelector("#sheetBody .sh button");if(hb){hb.textContent="กลับ";hb.onclick=()=>{tdStop();openClass(sec)}}
    const bc=$("bTdClose");if(bc){bc.textContent="🚪 Exit Class";bc.onclick=()=>{tdStop();clsExit(X)}}const bh=$("bTdHist2");if(bh)bh.onclick=()=>{tdStop();NAV.back=()=>openClass(sec);openAttHistory(sec)}}}
  $("clChg")&&($("clChg").onclick=()=>{CLX.free=null;clsStop();openClass(sec)});
