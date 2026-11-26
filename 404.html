@@ -279,6 +279,7 @@ ul.need{margin:4px 0;padding-left:1.2em}ul.need li{margin:4px 0}.skw{margin-bott
 #printArea .rpprint{font-size:10.5pt}#printArea .rpc{border:1px solid #bbb;break-inside:avoid}
 .mmc{border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin:8px 0;display:grid;gap:6px}.mmc select{width:100%;padding:6px;border-radius:8px;border:1px solid var(--line);font:inherit;background:var(--surface)}
 .roin{width:64px;padding:4px 6px;border:1px solid var(--line);border-radius:8px;font:inherit}
+.w4g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:6px 0}.w4opt{display:grid;grid-template-columns:1fr 1fr;gap:8px}.w4o{cursor:pointer}.w4o.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}.w4ex{margin:2px 0 8px}.w4ex summary{cursor:pointer;color:var(--accent);font-size:13.5px}@media(max-width:560px){.w4opt{grid-template-columns:1fr}}
 .w3in{width:100%;font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);box-sizing:border-box;background:var(--card,#fff);color:inherit}.w3g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}.w3vis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}.w3t td{vertical-align:top}.w3t textarea{min-width:130px}.w3vw table{margin:6px 0;font-size:13px}@media(max-width:640px){.w3g2{grid-template-columns:1fr}}
 .smg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:6px 0 10px}.smc{display:block;border:2px solid #2a9d8f;border-radius:12px;padding:8px 10px;background:var(--card,#fff);cursor:pointer;position:relative}.smc input{position:absolute;opacity:0;pointer-events:none}.smc.on{background:#e6f5f3;box-shadow:0 0 0 2px #2a9d8f inset;color:#1f2a44}.smc.smcr{border-color:#e07a5f}.smc.lk{opacity:.55;cursor:default}.smt{display:flex;justify-content:space-between;gap:6px;align-items:flex-start}.smcost{background:#2a9d8f;color:#fff;border-radius:999px;min-width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;flex:none}.smcr .smcost{background:#e07a5f}.smv{font-size:13px;margin-top:2px}.smn{font-size:12px}.smbad{color:var(--bad,#d0453f)!important}.smbar{display:flex;flex-wrap:wrap;gap:14px;padding:8px 12px;border-radius:10px;background:var(--line,#eee);margin-bottom:8px;position:sticky;top:0;z-index:2}.smev{border:2px solid #e07a5f;background:#fdf1ee;border-radius:12px;padding:10px 12px;margin-bottom:8px;color:#1f2a44}.smevh{color:#c0533a;font-weight:700}
 </style>
@@ -1084,11 +1085,11 @@ async function openXt(){const u=AUTH.u;if(!u||!AUTH.prof?.sid){toast("เข้�
  const g2=mine.g2,gRow=(op.g2===true||g2)?`<div class="xtr"><div><b>🎮 บทที่ 2 · Manifesto Match</b> SCI Beacon${g2?`<div class="muted" style="font-size:13px">เล่นแล้ว ถูก ${g2.ok}/12 · ${new Date(g2.at).toLocaleString("th-TH")}</div>`:""}</div>${g2?`<button data-mmv="1">ดูผล</button>`:`<button class="pri" data-mmp="1">เล่น</button>`}</div>`:"";
  const g3=mine.g3,gRow3=(op.g3===true||g3)?`<div class="xtr"><div><b>🛡️ บทที่ 3 · Scope Guard</b> SCI Beacon${g3?`<div class="muted" style="font-size:13px">เล่นแล้ว ได้ ${g3.ok}/30 · ${new Date(g3.at).toLocaleString("th-TH")}</div>`:""}</div>${g3?`<button data-sgv="1">ดูผล</button>`:`<button class="pri" data-sgp="1">เล่น</button>`}</div>`:"";
  const s3=mine.s3,gRowS=(op.s3===true||s3?.at)?`<div class="xtr"><div><b>🏪 บทที่ 3 · Scope Market</b> เกมทีม<div class="muted" style="font-size:13px">${s3?.at?`ทีม ${esc(s3.team)} ได้ ${s3.tot} คะแนน · ${new Date(s3.at).toLocaleString("th-TH")}`:"ทีมใช้เครื่องเดียว · คนหนึ่งเล่นและส่งผลแทนทีม"}</div></div>${s3?.at?`<button data-smp="1">ดูผล</button>`:`<button class="pri" data-smp="1">เล่น</button>`}</div>`:"";
- const w3=mine.w3,gRowW=(op.w3===true||w3?.at)?`<div class="xtr"><div><b>🧩 บทที่ 3 · Workshop SCIBeacon รุ่นที่ 2</b> ใบงานทีม<div class="muted" style="font-size:13px">${w3?.sub?`ส่งแล้ว ${new Date(w3.sub).toLocaleString("th-TH")}`:w3?.at?"บันทึกร่างไว้แล้ว ยังไม่ได้ส่ง":"ทีมละ 1 ชุด · ผู้จดบันทึกส่งคนเดียว"}</div></div><button class="${w3?.sub?"":"pri"}" data-w3p="1">${w3?.sub?"เปิดดู":"เริ่มทำ"}</button></div>`:"";
- const rows=teamRoomRows(op)+lvRows(op,mine)+gRow+gRow3+gRowS+gRowW+Object.keys(CH_T).map(Number).filter(c=>op[c]===true||mine["x"+c]).map(c=>{const x=mine["x"+c];return`<div class="xtr"><div><b>บทที่ ${c}</b> ${esc(CH_T[c])}${x?`<div class="muted" style="font-size:13px">ทำแล้ว ถูก ${x.ok}/${x.n} · ${new Date(x.at).toLocaleString("th-TH")}</div>`:""}</div>${x?(op[c]===true?`<span class="pill">✓ ส่งแล้ว</span>`:`<button data-xr="${c}">ดูเฉลย</button>`):`<button class="pri" data-xt="${c}">เริ่มทำ</button>`}</div>`}).join("");
+ const w3=mine.w3,gRowW=(op.w3===true||w3?.at)?`<div class="xtr"><div><b>🧩 บทที่ 3 · Workshop 4 สถานี</b> ใบงานทีม<div class="muted" style="font-size:13px">${w3?.sub?`ส่งแล้ว ${new Date(w3.sub).toLocaleString("th-TH")}`:w3?.at?"บันทึกร่างไว้แล้ว ยังไม่ได้ส่ง":"ทีมละ 1 ชุด · ผู้จดบันทึกส่งคนเดียว"}</div></div><button class="${w3?.sub?"":"pri"}" data-w3p="1">${w3?.sub?"เปิดดู":"เริ่มทำ"}</button></div>`:"";
+ const rows=teamRoomRows(op)+lvRows(op,mine)+gRow+gRow3+gRowS+gRowW+e321Row(op,mine)+Object.keys(CH_T).map(Number).filter(c=>op[c]===true||mine["x"+c]).map(c=>{const x=mine["x"+c];return`<div class="xtr"><div><b>บทที่ ${c}</b> ${esc(CH_T[c])}${x?`<div class="muted" style="font-size:13px">ทำแล้ว ถูก ${x.ok}/${x.n} · ${new Date(x.at).toLocaleString("th-TH")}</div>`:""}</div>${x?(op[c]===true?`<span class="pill">✓ ส่งแล้ว</span>`:`<button data-xr="${c}">ดูเฉลย</button>`):`<button class="pri" data-xt="${c}">เริ่มทำ</button>`}</div>`}).join("");
  openSheet(`<div class="sh"><h2>🎮 เกมและ Exit ticket</h2><button onclick="closeSheet()">ปิด</button></div><p class="muted" style="margin-top:0">กิจกรรมที่อาจารย์เปิดไว้ · คะแนนบันทึกลงแฟ้มสะสมงานอัตโนมัติ</p>${rows||`<p class="muted">ตอนนี้ยังไม่มีกิจกรรมที่อาจารย์เปิดไว้</p>`}`);
  document.querySelectorAll("[data-xt]").forEach(b=>b.onclick=()=>takeXt(+b.dataset.xt));document.querySelectorAll("[data-xr]").forEach(b=>b.onclick=()=>reviewXt(+b.dataset.xr));document.querySelectorAll("[data-lvp]").forEach(b=>b.onclick=()=>openLv(+b.dataset.lvp));document.querySelectorAll("[data-room]").forEach(b=>b.onclick=()=>{closeSheet();joinClass(b.dataset.room,false)});
- document.querySelector("[data-mmp]")&&(document.querySelector("[data-mmp]").onclick=openMM);document.querySelector("[data-mmv]")&&(document.querySelector("[data-mmv]").onclick=()=>mmResult(g2));document.querySelector("[data-sgp]")&&(document.querySelector("[data-sgp]").onclick=openSG);document.querySelector("[data-sgv]")&&(document.querySelector("[data-sgv]").onclick=()=>sgResult(g3));document.querySelector("[data-w3p]")&&(document.querySelector("[data-w3p]").onclick=()=>openW3());document.querySelector("[data-smp]")&&(document.querySelector("[data-smp]").onclick=()=>openSM())}
+ document.querySelector("[data-mmp]")&&(document.querySelector("[data-mmp]").onclick=openMM);document.querySelector("[data-mmv]")&&(document.querySelector("[data-mmv]").onclick=()=>mmResult(g2));document.querySelector("[data-sgp]")&&(document.querySelector("[data-sgp]").onclick=openSG);document.querySelector("[data-sgv]")&&(document.querySelector("[data-sgv]").onclick=()=>sgResult(g3));document.querySelector("[data-w3p]")&&(document.querySelector("[data-w3p]").onclick=()=>openW3());document.querySelector("[data-smp]")&&(document.querySelector("[data-smp]").onclick=()=>openSM());document.querySelector("[data-e321]")&&(document.querySelector("[data-e321]").onclick=()=>open321())}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 async function fnCall(name,data){if(!FN)throw new Error("ยังไม่ได้เชื่อมต่อระบบตรวจคำตอบ กรุณารีเฟรชหน้าเว็บ");
  try{return(await FN.httpsCallable(name)(data||{})).data}catch(e){const c=String(e.code||"").replace("functions/","");
@@ -1135,8 +1136,8 @@ async function openXtAdminOld(){openSheet(`<div class="sh"><h2>📝 จัดก
  openSheet(`<div class="sh"><h2>📝 จัดการ Exit ticket</h2><button onclick="closeSheet()">ปิด</button></div><p class="muted" style="margin-top:0">เปิดเมื่อจบคาบ แล้วปิดเมื่อหมดเวลา นิสิตส่งได้คนละครั้ง บทที่เคยเปิดจะนับเป็นบทที่เก็บคะแนน ผู้ที่ไม่ส่งได้ 0 ในส่วนนี้</p>
  ${(()=>{const GL=[["g2",12,"บทที่ 2 · Manifesto Match","3×ถูก/12"],["g3",30,"บทที่ 3 · Scope Guard","3×คะแนน/30"]];return`<h3 style="margin:6px 0 2px">🎮 เกมรายบุคคล</h3>`+GL.map(([k,N,t,f])=>{let n=0,s=0;for(const u in pf){const g=pf[u]?.[k];if(g){n++;s+=g.ok/N}}return`<div class="xtr"><div><b>${t}</b> SCI Beacon<div class="muted" style="font-size:13px">${op[k]===true?"🟢 เปิดอยู่":op[k]===false?"⚪ ปิดแล้ว":"ยังไม่เคยเปิด (ไม่นับคะแนน)"} · ${n?`เล่นแล้ว ${n} คน · เฉลี่ย ${Math.round(100*s/n)}%`:"ยังไม่มีผู้เล่น"} · คะแนนรายบุคคล 3 (${f})</div></div><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="ghost" data-gpv="${k}">ทดลองเล่น</button>${k==="g3"?`<button class="ghost" data-sgc="1">สรุปคำตอบ</button>`:""}<button class="${op[k]===true?"":"pri"}" data-xo="${k}">${op[k]===true?"ปิด":"เปิด"}</button></div></div>`}).join("")+smAdmRow(op,pf)+w3AdmRow(op,pf)+lvAdmRows(op,pf)+`<h3 style="margin:10px 0 2px">📝 Exit ticket</h3><div class="row" style="gap:6px;margin:2px 0 6px"><button class="ghost" id="bXtAna">📊 วิเคราะห์ข้อสอบทุกบท</button><button class="ghost" id="bXtLegacy">นำผลบทที่ 1–3 แบบเดิมเข้าการวิเคราะห์</button></div>`})()}
  ${Object.keys(CH_T).map(Number).map(c=>`<div class="xtr"><div><b>บทที่ ${c}</b> ${esc(CH_T[c])}<div class="muted" style="font-size:13px">${op[c]===true?"🟢 เปิดอยู่":op[c]===false?"⚪ ปิดแล้ว":"ยังไม่เคยเปิด (ไม่นับคะแนน)"} · ${st(c)}</div></div><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="ghost" data-xv="${c}">ดูข้อ</button><button class="${op[c]===true?"":"pri"}" data-xo="${c}">${op[c]===true?"ปิด":"เปิด"}</button></div></div>`).join("")}`);
- document.querySelectorAll("[data-xo]").forEach(b=>b.onclick=async()=>{const c=/^[gwsl]/.test(b.dataset.xo)?b.dataset.xo:+b.dataset.xo;const nm=/^l\d/.test(c)?`ด่านตัดสินใจที่ ${c.slice(1)}`:c==="s3"?"เกม Scope Market":c==="w3"?"ใบงานทีมบทที่ 3":c==="g2"?"เกม Manifesto Match":c==="g3"?"เกม Scope Guard":`Exit ticket บทที่ ${c}`;try{await DB.ref("xt/open/"+c).set(op[c]!==true);toast(op[c]!==true?`เปิด${nm}แล้ว`:`ปิด${nm}แล้ว`);openXtAdmin()}catch(e){toast("บันทึกไม่ได้ ต้องเป็นบัญชีอาจารย์")}});
- lvAdmBind();document.querySelector("[data-sgc]")&&(document.querySelector("[data-sgc]").onclick=sgClass);document.querySelector("[data-w3c]")&&(document.querySelector("[data-w3c]").onclick=w3Class);document.querySelector("[data-smc]")&&(document.querySelector("[data-smc]").onclick=smClass);
+ document.querySelectorAll("[data-xo]").forEach(b=>b.onclick=async()=>{const c=/^[gwsl]/.test(b.dataset.xo)?b.dataset.xo:+b.dataset.xo;const nm=/^l\d/.test(c)?`ด่านตัดสินใจที่ ${c.slice(1)}`:c==="s3"?"เกม Scope Market":c==="w3"?"ใบงานทีมบทที่ 3":c==="w3x"?"Exit Ticket 3-2-1 บทที่ 3":c==="g2"?"เกม Manifesto Match":c==="g3"?"เกม Scope Guard":`Exit ticket บทที่ ${c}`;try{await DB.ref("xt/open/"+c).set(op[c]!==true);toast(op[c]!==true?`เปิด${nm}แล้ว`:`ปิด${nm}แล้ว`);openXtAdmin()}catch(e){toast("บันทึกไม่ได้ ต้องเป็นบัญชีอาจารย์")}});
+ lvAdmBind();document.querySelector("[data-sgc]")&&(document.querySelector("[data-sgc]").onclick=sgClass);document.querySelector("[data-w3c]")&&(document.querySelector("[data-w3c]").onclick=w3Class);document.querySelector("[data-e321c]")&&(document.querySelector("[data-e321c]").onclick=e321Class);document.querySelector("[data-e321pv]")&&(document.querySelector("[data-e321pv]").onclick=()=>open321(true));document.querySelector("[data-smc]")&&(document.querySelector("[data-smc]").onclick=smClass);
  document.querySelectorAll("[data-gpv]").forEach(b=>b.onclick=()=>b.dataset.gpv==="s3"?openSM(true):b.dataset.gpv==="w3"?openW3(true):b.dataset.gpv==="g3"?openSG(true):openMM(true));
  document.querySelectorAll("[data-xv]").forEach(b=>b.onclick=async()=>{const c=+b.dataset.xv;openSheet(`<div class="sh"><h2>บทที่ ${c} · คำถามและเฉลย</h2><button onclick="openXtAdmin()">กลับ</button></div><p><span class="wait"></span> กำลังโหลดจากเซิร์ฟเวอร์…</p>`);
   let r,stt=null;try{r=await fnCall("getBankForTeacher",{ch:c});stt=(await DB.ref("xtStats/"+c).once("value")).val()}catch(e){openSheet(`<div class="sh"><h2>บทที่ ${c}</h2><button onclick="openXtAdmin()">กลับ</button></div><p class="lead">${esc(e.message)}</p>`);return}
@@ -1230,12 +1231,13 @@ const CH_GAMES={
  2:[{k:"g2",t:"Manifesto Match",ic:"🧩",type:"ind",demo:()=>openMM(true)}],
  3:[{k:"s3",t:"Scope Market",ic:"🏪",type:"team",demo:()=>openSM(true),res:()=>smClass(),resT:"ผลทีม"},
     {k:"g3",t:"Scope Guard",ic:"🛡️",type:"ind",demo:()=>openSG(true),res:()=>sgClass(),resT:"สรุปคำตอบ"},
-    {k:"w3",t:"Workshop รุ่นที่ 2",ic:"📝",type:"ws",demo:()=>openW3(true),res:()=>w3Class(),resT:"ตรวจใบงาน"}],
+    {k:"w3",t:"Workshop 4 สถานี",ic:"📝",type:"ws",demo:()=>openW3(true),res:()=>w3Class(),resT:"ตรวจใบงาน"},
+    {k:"w3x",t:"Exit Ticket 3-2-1",ic:"🎫",type:"ref",demo:()=>open321(true),res:()=>e321Class(),resT:"ดูคำตอบ"}],
  4:[{k:"c4",t:"Critical Path Rush",ic:"⏱️",type:"team",demo:()=>startDemo("cpm")},
     {k:"l3",t:"แข่งกับเวลา",ic:"🎯",type:"ind",demo:()=>openLv(3)}],
  6:[{k:"c6",t:"Sprint Quest · Scrum",ic:"🔁",type:"team",demo:()=>demoSq(1)}],
 };
-const TYPE_T={team:"ทีม",ind:"รายบุคคล",ws:"ใบงานทีม"};
+const TYPE_T={team:"ทีม",ind:"รายบุคคล",ws:"ใบงานทีม",ref:"สะท้อนคิด"};
 function demoSq(scrum){closeSheet();startDemo("sq");if(scrum){try{G=reduce(G,{a:"mode",x:1},G.pl[0]||ME);render()}catch(e){}}}
 
 /* ---------- หน้าแรกของอาจารย์ ---------- */
@@ -1705,7 +1707,7 @@ function gainOf(S,c,k){const s=S.ch[c];let av=0,E=0;if(s)for(const q of ["team",
  if(s&&s[k])return r1((s[k][1]-s[k][0])/av*10*50/120);const w=S.pend?.[c]?.[k];if(!w)return null;return s?r1(((E+w)/(av+w)*10-s.s)*50/120):r1(50/12)}
 function missions(S,mine,op,tags){const L=[];
  if(op?.s3===true&&!mine?.s3?.at)L.push({lv:"L2",gain:gainOf(S,3,"team"),t:"เล่น Scope Market กับทีม · เลือกขอบเขตภายใต้ความเร็วที่จำกัด",m:"เกมทีม 3 รอบ · ประมาณ 20 นาที · ตัวช่วย: เฉลยประเภทเหตุการณ์ทันที",go:"openSM()"});
- if(op?.w3===true&&!mine?.w3?.sub)L.push({lv:"L2",gain:gainOf(S,3,"ws"),t:"ทำ Workshop บทที่ 3 · SCIBeacon รุ่นที่ 2 กับทีม",m:"ใบงานทีม 3 คะแนน · ประมาณ 30 นาที · ตัวช่วย: ตรวจทานเบื้องต้นอัตโนมัติ",go:"openW3()"});
+ if(op?.w3===true&&!mine?.w3?.sub)L.push({lv:"L2",gain:gainOf(S,3,"ws"),t:"ทำ Workshop บทที่ 3 · 4 สถานี (Vision → Story → AC → MoSCoW) กับทีม",m:"ใบงานทีม 3 คะแนน · ประมาณ 60 นาที · ตัวช่วย: ตรวจทานเบื้องต้นอัตโนมัติ",go:"openW3()"});
  if(op?.g3===true&&!mine?.g3)L.push({lv:"L2",gain:gainOf(S,3,"ind"),t:"เล่น Scope Guard · ขีดเส้นขอบเขตโครงการ SCIBeacon",m:"เกม 4 รอบ 30 คะแนน · ประมาณ 25 นาที · ตัวช่วย: เฉลยพร้อมคำอธิบาย",go:"openSG()"});
  if(op?.g2===true&&!mine?.g2)L.push({lv:"L1",gain:gainOf(S,2,"ind"),t:"เล่น Manifesto Match · จับคู่สถานการณ์ SCIBeacon กับหลักการอไจล์",m:"เกม 12 การ์ด · ประมาณ 8 นาที · ตัวช่วย: รายการหลักการ 12 ข้อ",go:"openMM()"});
  for(let c=1;c<=12;c++)if(op?.[c]===true&&!mine?.["x"+c])L.push({lv:lvOf(c).k,gain:gainOf(S,c,"xt"),t:`ทำ Exit ticket บทที่ ${c} · ${CH_T[c]}`,m:"Exit ticket 5 ข้อ · ประมาณ 5 นาที · ตัวช่วย: เฉลยพร้อมคำอธิบาย",go:`takeXt(${c})`});
@@ -1898,7 +1900,7 @@ const W3_RUB=[["a1","A1 วิสัยทัศน์และเส้นข�
 const W3_CR=[["imp","สอดคล้องกับวิสัยทัศน์หรือไม่ และผลกระทบต่อเวลา ทีม และรายการเดิม"],["o1","ทางเลือกที่ 1"],["o2","ทางเลือกที่ 2"],["o3","ทางเลือกที่ 3 (ถ้ามี)"],["prop","ข้อเสนอต่อ PO และสิ่งที่ต้องแลกออก"]];
 const W3={},w3S=s=>String(s||"").replace(/[\s,;/]+/g," ").trim().split(" ").filter(x=>/^\d{8,12}$/.test(x));
 function w3Calc(w){const v=+w.v||0,t=+w.t||0,r=+w.r||0,s=+w.s||0,c=v+t+r;return{c,ws:s?Math.round(100*c/s)/100:null}}
-function w3Check(d){const out=[],cl=d.cls||[],vis=d.vis||{},st=d.st||[],map=d.map||[],mo=d.mo||[];
+function w3CheckV1(d){const out=[],cl=d.cls||[],vis=d.vis||{},st=d.st||[],map=d.map||[],mo=d.mo||[];
  const nv=W3_VIS.filter(([k])=>(vis[k]||"").trim()).length;out.push([nv===7,`วิสัยทัศน์ครบ ${nv}/7 ส่วน`]);
  const nc=cl.filter(Boolean).length,nw=(d.why||[]).filter(x=>(x||"").trim()).length;out.push([nc===10&&nw>=8,`จัดเส้นขอบเขตแล้ว ${nc}/10 รายการ · มีเหตุผล ${nw} รายการ`]);
  const sk=W3_ACT.filter((_,j)=>(map[0]?.[j]||"").trim()).length;out.push([sk===5,`รุ่นที่ 1 มี Story ครบทุกกิจกรรม ${sk}/5 (Walking Skeleton)`]);
@@ -1909,13 +1911,13 @@ function w3Check(d){const out=[],cl=d.cls||[],vis=d.vis||{},st=d.st||[],map=d.ma
  const nwj=(d.wj||[]).filter(x=>(x?.n||"").trim()&&+x?.s).length;out.push([nwj===3&&(d.dep||"").trim().length>5,`คำนวณ WSJF ${nwj}/3 รายการ · ${(d.dep||"").trim().length>5?"ระบุ Dependency แล้ว":"ยังไม่ได้ระบุ Dependency"}`]);
  const cr=d.cr||{},ncr=["o1","o2"].filter(k=>(cr[k]||"").trim()).length;out.push([(cr.imp||"").trim()&&ncr===2&&(cr.prop||"").trim(),`คำขอเปลี่ยนแปลง: ผลกระทบ ${(cr.imp||"").trim()?"✓":"–"} · ทางเลือก ${ncr}/2 · ข้อเสนอ ${(cr.prop||"").trim()?"✓":"–"}`]);
  const a1=cl.filter((x,i)=>x===W3_KEY[i]).length;return{out,a1}}
-async function openW3(pv){const u=AUTH.u;W3.pv=!!(pv&&AUTH.teacher);let d={},op=W3.pv?true:null,gr=null;
+async function openW3V1(pv){const u=AUTH.u;W3.pv=!!(pv&&AUTH.teacher);let d={},op=W3.pv?true:null,gr=null;
  if(!W3.pv){if(!u||!AUTH.prof?.sid){toast("เข้าสู่ระบบและยืนยันรหัสนิสิตก่อน");return}
   try{d=(await DB.ref(`portfolio/${u.uid}/w3`).once("value")).val()||{};op=(await DB.ref("xt/open/w3").once("value")).val()}catch(e){}
   try{gr=(await DB.ref(`marks/${AUTH.prof.sid}/w3r`).once("value")).val()}catch(e){}
   if(op!==true&&!d.at&&!gr){toast("อาจารย์ยังไม่เปิดใบงานทีมบทที่ 3");return}}
  W3.ro=!W3.pv&&op!==true;W3.d=d;W3.gr=gr;w3Render()}
-function w3Render(){const d=W3.d||{},ro=W3.ro,dis=ro?" disabled":"",gr=W3.gr,v=x=>esc(x??"");
+function w3RenderV1(){const d=W3.d||{},ro=W3.ro,dis=ro?" disabled":"",gr=W3.gr,v=x=>esc(x??"");
  const inp=(id,val,ph,w)=>`<input class="w3in" id="${id}" value="${v(val)}" placeholder="${v(ph||"")}"${w?` style="width:${w}"`:""}${dis}>`;
  const ta=(id,val,ph,r)=>`<textarea class="w3in" id="${id}" rows="${r||2}" placeholder="${v(ph||"")}"${dis}>${v(val)}</textarea>`;
  const sel=(id,val,opts)=>`<select class="w3in" id="${id}"${dis}><option value=""></option>${opts.map(([k,n])=>`<option value="${k}"${val===k?" selected":""}>${n}</option>`).join("")}</select>`;
@@ -1967,7 +1969,7 @@ function w3Render(){const d=W3.d||{},ro=W3.ro,dis=ro?" disabled":"",gr=W3.gr,v=x
  $("bW3Send")&&($("bW3Send").onclick=async()=>{const c=collect();if(!c.team){toast("ใส่ชื่อทีมก่อนส่ง");return}if(w3S(c.mem).length<2){toast("ใส่รหัสนิสิตของสมาชิกทุกคน อย่างน้อย 2 คน");return}
   const ck=w3Check(c),miss=ck.out.filter(x=>!x[0]).length;if(miss&&W3.warned!==miss){W3.warned=miss;toast(`ยังมี ${miss} รายการในตรวจทานที่ไม่ครบ · กดส่งอีกครั้งเพื่อยืนยัน`);return}
   clearTimeout(W3.tm);$("bW3Send").disabled=true;if(await save(true)){toast("ส่งใบงานให้อาจารย์แล้ว");$("bW3Send").textContent="ส่งฉบับแก้ไขให้อาจารย์";live()}$("bW3Send").disabled=false})}
-function w3View(d){const v=x=>esc(x||"–"),vis=d.vis||{};
+function w3ViewV1(d){const v=x=>esc(x||"–"),vis=d.vis||{};
  return`<div class="w3vw"><p><b>วิสัยทัศน์</b> ${W3_VIS.map(([k,n])=>`<b class="muted">${n.split(" ")[0]}</b> ${v(vis[k])}`).join(" · ")}</p>
  <table class="score w3t"><tr><th>รายการ</th><th>ทีม</th><th>เฉลย</th><th>เหตุผล</th><th>MoSCoW</th></tr>${W3_ITEMS.map((t,i)=>`<tr><td>${esc(t)}</td><td${d.cls?.[i]===W3_KEY[i]?"":' style="color:var(--bad,#d0453f)"'}>${W3_CL[d.cls?.[i]]||"–"}</td><td class="muted">${W3_CL[W3_KEY[i]]}</td><td>${v(d.why?.[i])}</td><td>${v(d.mo?.[i])}</td></tr>`).join("")}</table>
  <table class="score w3t"><tr><th></th>${W3_ACT.map(a=>`<th>${a}</th>`).join("")}</tr>${W3_REL.map((r,i)=>`<tr><td><b>${r}</b></td>${W3_ACT.map((_,j)=>`<td>${v(d.map?.[i]?.[j])}</td>`).join("")}</tr>`).join("")}</table>
@@ -1976,7 +1978,7 @@ function w3View(d){const v=x=>esc(x||"–"),vis=d.vis||{};
  <table class="score w3t"><tr><th>WSJF</th><th>V</th><th>T</th><th>R</th><th>ขนาด</th><th>CoD</th><th>WSJF</th></tr>${(d.wj||[]).map(w=>{const r=w3Calc(w);return`<tr><td>${v(w.n)}</td><td>${v(w.v)}</td><td>${v(w.t)}</td><td>${v(w.r)}</td><td>${v(w.s)}</td><td>${r.c||"–"}</td><td><b>${r.ws??"–"}</b></td></tr>`}).join("")}</table>
  <p style="font-size:13px"><b>Dependency:</b> ${v(d.dep)}</p>
  <div class="tbox" style="font-size:13px"><b>CR-02 Dashboard</b>${W3_CR.map(([k,n])=>`<br><b>${n}:</b> ${v(d.cr?.[k])}`).join("")}</div></div>`}
-async function w3Class(){openSheet(`<div class="sh"><h2>🧩 ตรวจใบงานทีมบทที่ 3</h2><button onclick="openXtAdmin()">กลับ</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
+async function w3ClassV1(){openSheet(`<div class="sh"><h2>🧩 ตรวจใบงานทีมบทที่ 3</h2><button onclick="openXtAdmin()">กลับ</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
  let pf={},ro={},mk={};try{pf=(await DB.ref("portfolio").once("value")).val()||{};ro=(await DB.ref("rosters").once("value")).val()||{};mk=(await DB.ref("marks").once("value")).val()||{}}catch(e){toast("อ่านข้อมูลไม่ได้ ตรวจสิทธิ์อาจารย์")}
  const L=Object.entries(pf).map(([uid,x])=>[uid,x?.w3]).filter(([,w])=>w&&w.at).sort((a,b)=>(b[1].sub||0)-(a[1].sub||0)),done=new Set(),nm=s=>ro[s]?.n||"";
  for(const s in mk)if(mk[s]?.w3r)done.add(s);
@@ -1995,7 +1997,161 @@ async function w3Class(){openSheet(`<div class="sh"><h2>🧩 ตรวจใบ�
   if(!ok){toast("กรอกคะแนนให้ครบ 4 ข้อ");return}if(!S.length){toast("ไม่พบรหัสสมาชิกในรายชื่อนิสิต");return}r.tot=Math.round(100*tot)/100;
   const clash=S.filter(s=>mk[s]?.w3r&&mk[s].w3r.team!==r.team);if(clash.length&&!confirm(`${clash.join(", ")} มีคะแนนจากทีมอื่นแล้ว จะเขียนทับหรือไม่`))return;
   const up={};for(const s of S){up[`${s}/w3r`]=r;up[`${s}/ws/3`]=r.tot}try{await DB.ref("marks").update(up);S.forEach(s=>{mk[s]={...(mk[s]||{}),w3r:r}});toast(`บันทึก ${r.tot}/3 ให้ ${S.length} คนแล้ว`);w3Class()}catch(e){toast("บันทึกไม่ได้ ต้องเป็นบัญชีอาจารย์")}})}
-function w3AdmRow(op,pf){let n=0,s=0;for(const u in pf){const w=pf[u]?.w3;if(w?.sub)s++;else if(w?.at)n++}return`<h3 style="margin:10px 0 2px">🧩 ใบงานทีม</h3><div class="xtr"><div><b>บทที่ 3 · Workshop SCIBeacon รุ่นที่ 2</b><div class="muted" style="font-size:13px">${op.w3===true?"🟢 เปิดอยู่":op.w3===false?"⚪ ปิดแล้ว (ทีมดูได้อย่างเดียว)":"ยังไม่เคยเปิด"} · ส่งแล้ว ${s} ทีม${n?` · ร่าง ${n}`:""} · ใบงาน 3 คะแนน (อาจารย์ตรวจตามเกณฑ์)</div></div><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="ghost" data-gpv="w3">ทดลองทำ</button><button class="ghost" data-w3c="1">ตรวจใบงาน</button><button class="${op.w3===true?"":"pri"}" data-xo="w3">${op.w3===true?"ปิด":"เปิด"}</button></div></div>`}
+function w3AdmRowV1(op,pf){let n=0,s=0;for(const u in pf){const w=pf[u]?.w3;if(w?.sub)s++;else if(w?.at)n++}return`<h3 style="margin:10px 0 2px">🧩 ใบงานทีม</h3><div class="xtr"><div><b>บทที่ 3 · Workshop SCIBeacon รุ่นที่ 2</b><div class="muted" style="font-size:13px">${op.w3===true?"🟢 เปิดอยู่":op.w3===false?"⚪ ปิดแล้ว (ทีมดูได้อย่างเดียว)":"ยังไม่เคยเปิด"} · ส่งแล้ว ${s} ทีม${n?` · ร่าง ${n}`:""} · ใบงาน 3 คะแนน (อาจารย์ตรวจตามเกณฑ์)</div></div><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="ghost" data-gpv="w3">ทดลองทำ</button><button class="ghost" data-w3c="1">ตรวจใบงาน</button><button class="${op.w3===true?"":"pri"}" data-xo="w3">${op.w3===true?"ปิด":"เปิด"}</button></div></div>`}
+
+/* ---------- v20b: Workshop บทที่ 3 แบบ 4 สถานี (CleanFit → โจทย์ของกลุ่ม) + Exit Ticket 3-2-1 ----------
+   ข้อมูล: portfolio/{uid}/w3 (v:2) · คะแนน marks/{sid}/w3r (v:2, raw/10) และ ws/3 = raw×0.3
+   3-2-1: portfolio/{uid}/w3x · เปิด–ปิดด้วย xt/open/w3x */
+const W4_VIS=[["for","For · สำหรับ","กลุ่มผู้ใช้เป้าหมาย"],["who","Who · ผู้ที่","ปัญหาหรือความต้องการ"],["the","The · ผลิตภัณฑ์","ชื่อผลิตภัณฑ์"],["isa","Is a · คือ","ประเภทผลิตภัณฑ์"],["that","That · ซึ่ง","ประโยชน์หลัก"],["unlike","Unlike · ต่างจาก","ทางเลือกเดิม"],["our","Our Product · จุดต่าง","จุดต่างที่ตรวจได้"]];
+const W4_CF={for:"พนักงานออฟฟิศในกรุงเทพฯ ที่ใส่ใจสุขภาพ",who:"พักเที่ยงสั้น และหาอาหารคลีนที่อร่อยได้ยาก",the:"CleanFit (คลีนฟิต)",isa:"บริการส่งอาหารคลีนแบบผูกปิ่นโตผ่านแอปพลิเคชัน",that:"ส่งอาหารที่คำนวณโภชนาการแล้วถึงโต๊ะทุกวัน ไม่ต้องสั่งใหม่",unlike:"แอปส่งอาหารทั่วไป · ร้านตามสั่งใต้อาคาร",our:"เมนูโดยนักโภชนาการ ไม่ซ้ำ 30 วัน วัตถุดิบออร์แกนิกตรวจที่มาได้"};
+const W4_CFS=["S1 ผูกปิ่นโต ตัดเงินอัตโนมัติ","S2 ข้ามหรือหยุดส่ง","S3 ดูและสลับเมนู 30 วัน","S4 แนะนำตามเป้าหมาย","S5 ระบุอาหารที่แพ้","S6 สรุปโภชนาการ","S7 สแกนดูที่มาวัตถุดิบ","S8 รู้จักนักโภชนาการ","S9 ระบุจุดวางพร้อมรูป","S10 เลือกช่วงเวลาส่ง"];
+const W4_OPT={A:["A · ย้อนรอย SCIBeacon ปี 2562","วางแผนใหม่แบบ Agile เต็มรูปแบบ ใช้ Vision เดิมและคำขอ 10 รายการของรุ่นที่ 2"],B:["B · Smart University Life","ไอเดียใหม่ เช่น จองโต๊ะโรงอาหาร · หาเพื่อนติว · ยืมคืนของคณะ · งบ 0 บาท เวลา 3 เดือน"]};
+const W4_RUB=[["vis","ความชัดเจนของ Vision",2,"กลุ่มเป้าหมายและคุณค่าตรงจุด"],["sto","คุณภาพของ User Story",3,"ถูกรูปแบบ เห็นคุณค่าชัด"],["ac","ความครบของ AC",3,"มีกรณีปกติและกรณีผิดพลาด ทดสอบได้"],["pri","ตรรกะการจัดลำดับ",2,"ไม่เทไปที่ Must ทั้งหมด"]];
+const W4_N=10,W4_MO=[["M","Must"],["S","Should"],["C","Could"],["W","Won't (รอบนี้)"]];
+const w4A=x=>Array.isArray(x)?x:(x&&typeof x==="object")?Array.from({length:Math.max(-1,...Object.keys(x).map(Number).filter(n=>n>=0))+1},(_,i)=>x[i]):[];
+const w4Norm=d=>{if(d&&d.v===2){d.st=w4A(d.st);d.mo=w4A(d.mo);d.ac=w4A(d.ac)}return d};
+const w4Fmt=s=>/ในฐานะ/.test(s||"")&&/ต้องการ/.test(s||"")&&/เพื่อ/.test(s||"");
+const w4GWT=a=>(a?.g||"").trim().length>2&&(a?.w||"").trim().length>2&&(a?.t||"").trim().length>2;
+function w3Check(d){w4Norm(d);if(d&&d.v!==2&&typeof w3CheckV1==="function")return w3CheckV1(d);
+ const out=[],vis=d.vis||{},st=(d.st||[]).filter(x=>(x?.s||"").trim()),mo=d.mo||[],ac=d.ac||[];
+ const nv=W4_VIS.filter(([k])=>(vis[k]||"").trim()).length;out.push([nv===7,`สถานี 1 · Vision ครบ ${nv}/7 ช่อง`]);
+ const nf=st.filter(x=>w4Fmt(x.s)).length;out.push([st.length>=8&&nf===st.length,`สถานี 2 · User Story ${st.length} ใบ (ต้อง 8–10) · ครบรูปแบบ “ในฐานะ… ต้องการ… เพื่อ…” ${nf}/${st.length}`]);
+ const gs=d.gold!==""&&d.gold!=null&&(d.st||[])[+d.gold]?.s;const na=ac.filter(w4GWT).length,fail=ac.some(a=>w4GWT(a)&&a.k==="f");
+ out.push([!!gs&&na>=3&&fail,`สถานี 3 · Golden Story ${gs?"✓":"ยังไม่เลือก"} · AC แบบ Given/When/Then ${na}/3 ข้อ · ${fail?"มีกรณีผิดพลาดแล้ว":"ยังไม่มีกรณีผิดพลาด"}`]);
+ const idx=(d.st||[]).map((x,i)=>(x?.s||"").trim()?i:-1).filter(i=>i>=0),nm=idx.filter(i=>mo[i]).length,mu=idx.filter(i=>mo[i]==="M").length,nw=idx.filter(i=>mo[i]==="W").length,p=nm?Math.round(100*mu/nm):0;
+ out.push([idx.length>0&&nm===idx.length&&p<=60&&nw>=1&&(d.cut||"").trim().length>5,nm?`สถานี 4 · จัดแล้ว ${nm}/${idx.length} ใบ · Must ${p}% ${p>60?"เกินราว 60% ให้ PO ตัดใหม่":"(ไม่เกินราว 60%)"} · ถูกตัด (Won't) ${nw} ใบ${(d.cut||"").trim().length>5?" · มีเหตุผลการตัด":" · ยังไม่เขียนเหตุผลการตัด"}`:"สถานี 4 · ยังไม่ได้จัด MoSCoW"]);
+ return{out,a1:0}}
+async function openW3(pv){const u=AUTH.u;W3.pv=!!(pv&&AUTH.teacher);let d={},op=W3.pv?true:null,gr=null;
+ if(!W3.pv){if(!u||!AUTH.prof?.sid){toast("เข้าสู่ระบบและยืนยันรหัสนิสิตก่อน");return}
+  try{d=(await DB.ref(`portfolio/${u.uid}/w3`).once("value")).val()||{};op=(await DB.ref("xt/open/w3").once("value")).val()}catch(e){}
+  try{gr=(await DB.ref(`marks/${AUTH.prof.sid}/w3r`).once("value")).val()}catch(e){}
+  if(op!==true&&!d.at&&!gr){toast("อาจารย์ยังไม่เปิดใบงานทีมบทที่ 3");return}}
+ w4Norm(d);if(d.at&&d.v!==2&&!d.sub)d={};
+ W3.ro=!W3.pv&&(op!==true||(d.at&&d.v!==2));W3.d=d;W3.gr=gr;W3.sta=W3.sta||1;w3Render()}
+function w3Render(){const d=W3.d||{},ro=W3.ro,dis=ro?" disabled":"",gr=W3.gr,v=x=>esc(x??"");
+ if(d.at&&d.v!==2){openSheet(`<div class="sh"><h2>🧩 Workshop บทที่ 3</h2><button onclick="openXt()">กลับ</button></div><p class="note warn">ทีมส่งใบงานแบบเดิมไว้แล้ว · ดูได้อย่างเดียว</p>${typeof w3ViewV1==="function"?w3ViewV1(d):""}`);return}
+ const inp=(id,val,ph,w)=>`<input class="w3in" id="${id}" value="${v(val)}" placeholder="${v(ph||"")}"${w?` style="width:${w}"`:""}${dis}>`;
+ const ta=(id,val,ph,r)=>`<textarea class="w3in" id="${id}" rows="${r||2}" placeholder="${v(ph||"")}"${dis}>${v(val)}</textarea>`;
+ const sel=(id,val,opts)=>`<select class="w3in" id="${id}"${dis}><option value=""></option>${opts.map(([k,n])=>`<option value="${k}"${String(val)===String(k)?" selected":""}>${esc(n)}</option>`).join("")}</select>`;
+ const vis=d.vis||{},st=d.st||[],ac=d.ac||[{k:"n"},{k:"f"},{k:"f"}],mo=d.mo||[],rl=d.roles||{};
+ const grBox=gr?`<div class="tbox" style="border-left:4px solid var(--ok,#2e9e5b);margin-bottom:8px"><b>ผลการตรวจจากอาจารย์: ${gr.raw??"–"}/10 → ${gr.tot}/3 คะแนน</b><div class="muted" style="font-size:13px">${gr.v===2?W4_RUB.map(([k,n,m])=>`${n} ${gr[k]??"–"}/${m}`).join(" · "):""}</div>${gr.cm?`<div style="margin-top:4px;white-space:pre-wrap">${esc(gr.cm)}</div>`:""}</div>`:"";
+ const ex=(t,body)=>`<details class="w4ex"><summary>👀 ดูตัวอย่าง CleanFit · ${t}</summary><div class="tbox" style="margin-top:4px;font-size:13.5px">${body}</div></details>`;
+ const tip=t=>`<p class="muted" style="margin:0 0 6px;font-size:13px">${t}</p>`;
+ const stRows=Array.from({length:W4_N},(_,i)=>`<tr><td><b>S${i+1}</b></td><td>${ta("w4s_"+i,st[i]?.s,i<8?"ในฐานะ… ฉันต้องการ… เพื่อ…":"(ไม่บังคับ)",2)}</td><td>${inp("w4g_"+i,st[i]?.g,"เช่น จัดการมื้อ","100%")}</td></tr>`).join("");
+ openSheet(`<div class="sh"><h2>🧩 Workshop บทที่ 3 · 4 สถานี</h2><button onclick="${W3.pv?"openXtAdmin()":"openXt()"}">กลับ</button></div>
+ ${W3.pv?`<p class="note warn" style="margin:0 0 8px">โหมดทดลองของอาจารย์ · ไม่บันทึกข้อมูล</p>`:""}${ro?`<p class="note warn" style="margin:0 0 8px">อาจารย์ปิดใบงานแล้ว · ดูได้อย่างเดียว</p>`:""}${grBox}
+ <p class="muted" style="margin-top:0">ทีม 3 คน · ใบงานทีม 3 คะแนน (เกณฑ์ 10 คะแนน แปลงเป็น 3) · ลองดูตัวอย่าง CleanFit ในแต่ละสถานี แล้วทำกับโจทย์ของกลุ่ม · <b>ผู้จดบันทึกส่งคนเดียว</b> ใส่รหัสสมาชิกทุกคน · ระบบบันทึกร่างให้อัตโนมัติ</p>
+ <div class="w3g2"><label><span class="lbl">ชื่อทีม</span>${inp("w4team",d.team,"เช่น ทีม Beacon A")}</label><label><span class="lbl">รหัสนิสิตสมาชิกทุกคน (รวมตัวเอง)</span>${inp("w4mem",d.mem||(W3.pv?"":AUTH.prof?.sid||""),"6720210033 6720210034 …")}</label></div>
+ <div class="w4g3"><label><span class="lbl">🖍️ Product Owner (ถือปากกาแดง ตัดสินสุดท้าย)</span>${inp("w4po",rl.po,"ชื่อ")}</label><label><span class="lbl">⏱️ Scrum Master (จับเวลา ตรวจ INVEST)</span>${inp("w4sm",rl.sm,"ชื่อ")}</label><label><span class="lbl">🛠️ Developer (ดูว่าทำได้จริง ช่วยเขียน AC)</span>${inp("w4dv",rl.dev,"ชื่อ")}</label></div>
+ <h3 class="sgh">เลือกโจทย์ 1 ข้อ</h3>
+ <div class="w4opt">${Object.entries(W4_OPT).map(([k,[t,s]])=>`<label class="tbox w4o${d.opt===k?" on":""}"><input type="radio" name="w4opt" value="${k}"${d.opt===k?" checked":""}${dis}> <b>${t}</b><div class="muted" style="font-size:13px">${s}</div></label>`).join("")}</div>
+ <div id="w4optA" style="display:${d.opt==="A"?"block":"none"}"><details><summary class="muted">คำขอ 10 รายการของ SCIBeacon รุ่นที่ 2</summary><ol style="font-size:13.5px;margin:4px 0">${W3_ITEMS.map(t=>`<li>${esc(t)}</li>`).join("")}</ol></details></div>
+ <label id="w4optB" style="display:${d.opt==="B"?"block":"none"}"><span class="lbl">ไอเดียของกลุ่ม</span>${inp("w4topic",d.topic,"เช่น จองโต๊ะโรงอาหาร")}</label>
+ <h3 class="sgh">สถานี 1 · Product Vision <span class="muted">15 นาที</span></h3>
+ ${tip("เติมให้ครบ 7 ช่อง (Moore, 2014) · แถว Our Product ต้องเป็นจุดต่างที่ตรวจได้ เช่น “เมนูไม่ซ้ำ 30 วัน” ไม่ใช่ “อาหารดีกว่า”")}
+ ${ex("Vision",W4_VIS.map(([k,n])=>`<b>${n.split(" · ")[0]}</b> ${esc(W4_CF[k])}`).join("<br>"))}
+ <div class="w3vis">${W4_VIS.map(([k,n,ph])=>`<label><span class="lbl">${n}</span>${inp("w4v_"+k,vis[k],ph)}</label>`).join("")}</div>
+ <h3 class="sgh">สถานี 2 · ระดมสมอง User Story <span class="muted">20 นาที</span></h3>
+ ${tip("8–10 ใบ ให้ครอบคลุมทุกขั้นของการใช้งาน · ใส่กลุ่มคุณค่าหลักใน Vision ท้ายแต่ละใบ จะเห็นทันทีว่ายังขาด Story ด้านใด")}
+ ${ex("User Story",`<i>S1 ในฐานะพนักงานออฟฟิศที่งานยุ่ง ฉันต้องการเลือกแพ็กเกจรายเดือนและตัดเงินอัตโนมัติ เพื่อไม่ต้องสั่งและโอนเงินทุกวัน</i><br><b>จัดการมื้อ</b> S1 S2 S3 · <b>สุขภาพ</b> S4 S5 S6 · <b>ความเชื่อมั่น</b> S7 S8 · <b>การจัดส่ง</b> S9 S10<br>${W4_CFS.join(" · ")}`)}
+ <div class="tw"><table class="score w3t"><tr><th>#</th><th>User Story</th><th style="width:22%">กลุ่มคุณค่า</th></tr>${stRows}</table></div>
+ <p class="muted" id="w4grp" style="font-size:13px;margin:4px 0 0"></p>
+ <h3 class="sgh">สถานี 3 · Golden Story และเกณฑ์การยอมรับ <span class="muted">15 นาที</span></h3>
+ ${tip("เลือก Story ที่สำคัญที่สุด 1 ใบ (ถ้าไม่มีใบนี้ บริการทั้งหมดเริ่มไม่ได้) แล้วเขียน AC อย่างน้อย 3 ข้อ ต้องมีทั้งกรณีปกติและกรณีผิดพลาด")}
+ ${ex("Golden Story + AC",`<b>S1 สมัครแพ็กเกจ</b><br>1) สมัครสำเร็จ · Given อยู่ในหน้า “แพ็กเกจ” · When เลือก 20 มื้อ/30 วัน กรอกบัตรถูกต้อง กดยืนยัน · Then ขึ้น “สมัครสำเร็จ” ตัดเงิน สถานะ Active ส่งใบเสร็จ ไปหน้าเลือกเมนู<br>2) บัตรถูกปฏิเสธ · When บัตรวงเงินไม่พอหรือหมดอายุ · Then แจ้งสาเหตุ ไม่ตัดเงิน แพ็กเกจยังค้างไว้ให้ลองใหม่<br>3) สมัครซ้ำ · Given มีแพ็กเกจที่ใช้อยู่แล้ว · Then เสนอให้อัปเกรด ไม่ตัดเงินซ้ำ`)}
+ <label><span class="lbl">Golden Story</span><span id="w4goldWrap">${sel("w4gold",d.gold,Array.from({length:W4_N},(_,i)=>[String(i),`S${i+1} ${(st[i]?.s||"").slice(0,60)}`]).filter((_,i)=>(st[i]?.s||"").trim()))}</span></label>
+ <label><span class="lbl">ทำไมเลือกใบนี้</span>${inp("w4gwhy",d.gwhy,"เช่น ถ้าสมัครไม่ได้ บริการทั้งหมดเริ่มไม่ได้")}</label>
+ ${[0,1,2,3].map(i=>`<fieldset class="xtq"><legend>AC ${i+1}${i===3?" (ไม่บังคับ)":""} ${sel("w4ak_"+i,ac[i]?.k||(i===0?"n":i<3?"f":""),[["n","กรณีปกติ"],["f","กรณีผิดพลาด / กรณีขอบ"]])} ${inp("w4an_"+i,ac[i]?.n,"ชื่อกรณี เช่น บัตรถูกปฏิเสธ","45%")}</legend><div class="w4g3">${["g","w","t"].map((k,j)=>`<label><span class="lbl">${["Given","When","Then"][j]}</span>${ta(`w4a${k}_${i}`,ac[i]?.[k],["สถานการณ์ตั้งต้น","ผู้ใช้ทำอะไร","ผลที่ต้องเห็น"][j],2)}</label>`).join("")}</div></fieldset>`).join("")}
+ <h3 class="sgh">สถานี 4 · จัดลำดับและตัดขอบเขต <span class="muted">10 นาที</span></h3>
+ ${tip("Must ไม่เกินราวร้อยละ 60 และต้องมีงานที่ถูกตัด · ถามทุกใบ: ไม่มีแล้วผิดคำสัญญาใน Vision หรือไม่ปลอดภัยหรือไม่ · PO ตัดสินสุดท้าย")} <b id="w4mp" class="muted"></b>
+ ${ex("MoSCoW",`<b>Must</b> S1 S3 S5 S9 S10 (5/10 = 50%) · ปิ่นโต เมนู 30 วัน แพ้อาหาร ส่งถึงโต๊ะ<br><b>Should</b> S2 S7 · <b>Could</b> S4 S8 · <b>Won't</b> S6 สรุปโภชนาการรายสัปดาห์ (ต้องเก็บประวัติการกินและสร้างรายงาน แรงมากเมื่อเทียบกับคุณค่าในรุ่นแรก)`)}
+ <div class="tw"><table class="score w3t" id="w4mot"></table></div>
+ <label><span class="lbl">งานที่ถูกตัด (Won't) และเหตุผล</span>${ta("w4cut",d.cut,"เช่น S6 ถูกตัดเพราะ…",2)}</label>
+ <h3 class="sgh">ตรวจทานก่อนส่ง</h3><div id="w3chk"></div>
+ <div class="tbox muted" style="font-size:13px">นำเสนอกลุ่มละ 3 นาที: Vision 30 วินาที → MoSCoW และสิ่งที่ตัด 1 นาที → Golden Story และ AC 1 นาที → สรุป 30 วินาที · เกณฑ์ ${W4_RUB.map(([,n,m])=>`${n} ${m}`).join(" · ")} = 10</div>
+ <p class="muted" id="w3st" style="min-height:1.2em">${d.sub?`ส่งให้อาจารย์แล้ว ${new Date(d.sub).toLocaleString("th-TH")}`:d.at?`บันทึกร่างล่าสุด ${new Date(d.at).toLocaleString("th-TH")}`:""}</p>
+ ${ro?"":`<button class="pri big" id="bW3Send">${d.sub?"ส่งฉบับแก้ไขให้อาจารย์":"ส่งใบงานให้อาจารย์"}</button>`}`);
+ const g=id=>($(id)?.value||"").trim();
+ const collect=()=>({v:2,team:g("w4team").slice(0,80),mem:g("w4mem").slice(0,200),roles:{po:g("w4po").slice(0,60),sm:g("w4sm").slice(0,60),dev:g("w4dv").slice(0,120)},
+  opt:document.querySelector('input[name="w4opt"]:checked')?.value||"",topic:g("w4topic").slice(0,120),vis:Object.fromEntries(W4_VIS.map(([k])=>[k,g("w4v_"+k).slice(0,300)])),
+  st:Array.from({length:W4_N},(_,i)=>({s:g("w4s_"+i).slice(0,400),g:g("w4g_"+i).slice(0,60)})),gold:g("w4gold"),gwhy:g("w4gwhy").slice(0,300),
+  ac:[0,1,2,3].map(i=>({k:g("w4ak_"+i),n:g("w4an_"+i).slice(0,80),g:g("w4ag_"+i).slice(0,400),w:g("w4aw_"+i).slice(0,400),t:g("w4at_"+i).slice(0,500)})),
+  mo:Array.from({length:W4_N},(_,i)=>$("w4o_"+i)?g("w4o_"+i):(W3.d?.mo||[])[i]||""),cut:g("w4cut").slice(0,600)});
+ const paintMo=c=>{const keep=Array.from({length:W4_N},(_,i)=>$("w4o_"+i)?g("w4o_"+i):(c.mo[i]||""));const rows=c.st.map((x,i)=>x.s?`<tr><td><b>S${i+1}</b> ${esc(x.s.slice(0,90))}${x.s.length>90?"…":""}</td><td>${sel("w4o_"+i,keep[i],W4_MO)}</td></tr>`:"").join("");
+  const t=$("w4mot");const sig=c.st.map(x=>x.s?1:0).join("");if(t.dataset.sig!==sig){t.innerHTML=`<tr><th>Story</th><th>MoSCoW</th></tr>`+(rows||`<tr><td colspan="2" class="muted">เขียน User Story ในสถานี 2 ก่อน</td></tr>`);t.dataset.sig=sig}
+  const gw=$("w4goldWrap"),gsig="g"+sig;if(gw.dataset.sig!==gsig){const cur=g("w4gold");gw.innerHTML=sel("w4gold",cur,c.st.map((x,i)=>[String(i),`S${i+1} ${x.s.slice(0,60)}`]).filter((_,i)=>c.st[i].s));gw.dataset.sig=gsig}};
+ const live=()=>{const c=collect();paintMo(c);c.mo=Array.from({length:W4_N},(_,i)=>$("w4o_"+i)?g("w4o_"+i):"");c.gold=g("w4gold");
+  $("w4optA").style.display=c.opt==="A"?"block":"none";$("w4optB").style.display=c.opt==="B"?"block":"none";document.querySelectorAll(".w4o").forEach(l=>l.classList.toggle("on",l.querySelector("input").checked));
+  const G={};c.st.forEach((x,i)=>{if(x.s){const k=x.g||"(ยังไม่ระบุกลุ่ม)";(G[k]=G[k]||[]).push("S"+(i+1))}});$("w4grp").textContent=Object.keys(G).length?"กลุ่มคุณค่า: "+Object.entries(G).map(([k,a])=>`${k} ${a.join(" ")}`).join(" · "):"";
+  const idx=c.st.map((x,i)=>x.s?i:-1).filter(i=>i>=0),nm=idx.filter(i=>c.mo[i]).length,mu=idx.filter(i=>c.mo[i]==="M").length;$("w4mp").textContent=nm?`ตอนนี้ Must ${mu}/${nm} = ${Math.round(100*mu/nm)}%`:"";
+  const ck=w3Check(c);$("w3chk").innerHTML=ck.out.map(([ok,t])=>`<div class="tbox" style="margin-bottom:4px;border-left:4px solid ${ok?"var(--ok,#2e9e5b)":"var(--warn,#d99a1e)"}">${ok?"✓":"•"} ${esc(t)}</div>`).join("");return c};
+ const save=async(sub)=>{if(W3.pv||ro)return;const c=live();c.at=now();c.by=AUTH.prof?.sid||"";c.name=AUTH.prof?.name||AUTH.u?.displayName||"";c.sub=sub?now():(W3.d?.sub||null);
+  try{await DB.ref(`portfolio/${AUTH.u.uid}/w3`).set(c);W3.d=c;$("w3st").textContent=c.sub?`ส่งให้อาจารย์แล้ว ${new Date(c.sub).toLocaleString("th-TH")}${sub?"":" · บันทึกการแก้ไขล่าสุด "+new Date(c.at).toLocaleTimeString("th-TH")}`:`บันทึกร่างแล้ว ${new Date(c.at).toLocaleTimeString("th-TH")}`;return true}catch(e){$("w3st").textContent="บันทึกไม่ได้ ตรวจการเชื่อมต่ออินเทอร์เน็ต";return false}};
+ const body=$("sheetBody");body.oninput=body.onchange=()=>{if(!$("w4mot")){body.oninput=body.onchange=null;return}live();clearTimeout(W3.tm);W3.tm=setTimeout(()=>save(false),1500)};live();
+ $("bW3Send")&&($("bW3Send").onclick=async()=>{const c=live();if(!c.team){toast("ใส่ชื่อทีมก่อนส่ง");return}if(!c.opt){toast("เลือกโจทย์ A หรือ B ก่อนส่ง");return}if(w3S(c.mem).length<2){toast("ใส่รหัสนิสิตของสมาชิกทุกคน อย่างน้อย 2 คน");return}
+  const ck=w3Check(c),miss=ck.out.filter(x=>!x[0]).length;if(miss&&W3.warned!==miss){W3.warned=miss;toast(`ยังมี ${miss} สถานีที่ไม่ครบ · กดส่งอีกครั้งเพื่อยืนยัน`);return}
+  clearTimeout(W3.tm);$("bW3Send").disabled=true;if(await save(true)){toast("ส่งใบงานให้อาจารย์แล้ว");$("bW3Send").textContent="ส่งฉบับแก้ไขให้อาจารย์";live()}$("bW3Send").disabled=false})}
+function w3View(d){w4Norm(d);if(d.v!==2)return typeof w3ViewV1==="function"?w3ViewV1(d):"";const v=x=>esc(x||"–"),vis=d.vis||{},st=(d.st||[]),mo=d.mo||[];
+ const by=k=>st.map((x,i)=>x?.s&&mo[i]===k?"S"+(i+1):"").filter(Boolean).join(" ")||"–";
+ return`<div class="w3vw"><p style="font-size:13px"><b>โจทย์</b> ${esc(W4_OPT[d.opt]?.[0]||"–")}${d.topic?` · ${esc(d.topic)}`:""} · <b>PO</b> ${v(d.roles?.po)} · <b>SM</b> ${v(d.roles?.sm)} · <b>Dev</b> ${v(d.roles?.dev)}</p>
+ <p style="font-size:13px"><b>Vision</b> ${W4_VIS.map(([k,n])=>`<b class="muted">${n.split(" · ")[0]}</b> ${v(vis[k])}`).join(" · ")}</p>
+ <table class="score w3t"><tr><th>#</th><th>User Story</th><th>กลุ่ม</th><th>MoSCoW</th></tr>${st.map((x,i)=>x?.s?`<tr${String(i)===String(d.gold)?' style="background:#fff7d6"':""}><td>S${i+1}${String(i)===String(d.gold)?" ⭐":""}</td><td>${esc(x.s)}${w4Fmt(x.s)?"":' <span style="color:var(--bad,#d0453f)">(รูปแบบไม่ครบ)</span>'}</td><td>${v(x.g)}</td><td>${v(mo[i])}</td></tr>`:"").join("")}</table>
+ <p style="font-size:13px"><b>Golden Story</b> S${(+d.gold||0)+1} · ${v(d.gwhy)}</p>
+ ${(d.ac||[]).filter(w4GWT).map((a,i)=>`<div class="tbox" style="margin:4px 0;font-size:13px"><b>AC ${i+1} · ${a.k==="f"?"กรณีผิดพลาด":"กรณีปกติ"}</b> ${v(a.n)}<br><b>Given</b> ${v(a.g)} · <b>When</b> ${v(a.w)} · <b>Then</b> ${v(a.t)}</div>`).join("")}
+ <p style="font-size:13px"><b>Must</b> ${by("M")} · <b>Should</b> ${by("S")} · <b>Could</b> ${by("C")} · <b>Won't</b> ${by("W")}<br><b>เหตุผลการตัด</b> ${v(d.cut)}</p></div>`}
+async function w3Class(){openSheet(`<div class="sh"><h2>🧩 ตรวจใบงานทีมบทที่ 3</h2><button onclick="openXtAdmin()">กลับ</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
+ let pf={},ro={},mk={};try{pf=(await DB.ref("portfolio").once("value")).val()||{};ro=(await DB.ref("rosters").once("value")).val()||{};mk=(await DB.ref("marks").once("value")).val()||{}}catch(e){toast("อ่านข้อมูลไม่ได้ ตรวจสิทธิ์อาจารย์")}
+ const L=Object.entries(pf).map(([uid,x])=>[uid,x?.w3]).filter(([,w])=>w&&w.at).sort((a,b)=>(b[1].sub||0)-(a[1].sub||0)),nm=s=>ro[s]?.n||"";
+ const card=([uid,w])=>{const S=[...new Set([...w3S(w.mem),w.by].filter(Boolean))],ck=w3Check(w),g=S.map(s=>mk[s]?.w3r).find(Boolean)||{},v2=w.v===2;
+  const rub=v2?W4_RUB:[["a1","A1",0.75],["a2","A2",1],["b1","B1",0.75],["b2","B2",0.5]];
+  return`<div class="tbox" style="margin-bottom:10px"><div class="row" style="justify-content:space-between;align-items:center"><div><b>${esc(w.team||"(ไม่มีชื่อทีม)")}</b>${v2?` · ${esc(W4_OPT[w.opt]?.[0]||"ยังไม่เลือกโจทย์")}`:" · ใบงานแบบเดิม"} · ${w.sub?`ส่งแล้ว ${new Date(w.sub).toLocaleString("th-TH")}`:`<span style="color:var(--warn,#d99a1e)">ยังเป็นร่าง · ${new Date(w.at).toLocaleString("th-TH")}</span>`} · ผู้ส่ง ${esc(w.by)} ${esc(w.name||nm(w.by))}</div>${g.tot!=null?`<span class="pill">ตรวจแล้ว ${g.raw!=null?g.raw+"/10 → ":""}${g.tot}/3</span>`:""}</div>
+  <div class="muted" style="font-size:13px">สมาชิก: ${S.map(s=>`${esc(s)} ${ro[s]?esc(nm(s)):'<span style="color:var(--bad,#d0453f)">ไม่พบในรายชื่อ</span>'}`).join(" · ")}</div>
+  <div style="font-size:13px;margin:4px 0">${ck.out.map(([ok,t])=>`${ok?"✓":"•"} ${esc(t)}`).join("<br>")}</div>
+  <details><summary>ดูใบงานทั้งหมด</summary>${w3View(w)}</details>
+  <div class="row" style="gap:6px;align-items:flex-end;margin-top:6px;flex-wrap:wrap">${rub.map(([k,n,m])=>`<label style="font-size:13px">${esc(n)} /${m}<br><input class="roin" type="number" min="0" max="${m}" step="0.25" data-w3g="${uid}|${k}" value="${g[k]??""}"></label>`).join("")}
+  <label style="flex:1;min-width:200px;font-size:13px">ข้อเสนอแนะถึงทีม<br><input class="w3in" data-w3cm="${uid}" value="${esc(g.cm||"")}"></label><button class="pri" data-w3sv="${uid}">บันทึกให้ทั้งทีม</button></div></div>`};
+ openSheet(`<div class="sh"><h2>🧩 ตรวจใบงานทีมบทที่ 3 (${L.length})</h2><button onclick="openXtAdmin()">กลับ</button></div>
+ <p class="muted" style="margin-top:0">เกณฑ์การนำเสนอ 10 คะแนน: ${W4_RUB.map(([,n,m,t])=>`${n} ${m} (${t})`).join(" · ")} · ระบบแปลงเป็นคะแนนใบงาน 3 คะแนน (×0.3) ให้สมาชิกทุกคนที่อยู่ในรายชื่อ · อย่าลืมกด “อัปเดตคะแนนให้นิสิตเห็น” ในหน้ารายชื่อ</p>
+ ${L.length?L.map(card).join(""):`<p class="muted">ยังไม่มีทีมส่งใบงาน</p>`}`);
+ document.querySelectorAll("[data-w3sv]").forEach(b=>b.onclick=async()=>{const uid=b.dataset.w3sv,w=pf[uid].w3,v2=w.v===2,S=[...new Set([...w3S(w.mem),w.by].filter(Boolean))].filter(s=>ro[s]);const r={at:now(),team:w.team||"",cm:(document.querySelector(`[data-w3cm="${uid}"]`)?.value||"").slice(0,1000)};let tot=0,ok=1;
+  const rub=v2?W4_RUB:[["a1","",0.75],["a2","",1],["b1","",0.75],["b2","",0.5]];
+  for(const [k,,m] of rub){const x=document.querySelector(`[data-w3g="${uid}|${k}"]`).value;if(x===""){ok=0;break}r[k]=Math.max(0,Math.min(m,+x));tot+=r[k]}
+  if(!ok){toast(`กรอกคะแนนให้ครบ ${rub.length} ข้อ`);return}if(!S.length){toast("ไม่พบรหัสสมาชิกในรายชื่อนิสิต");return}
+  if(v2){r.v=2;r.raw=Math.round(100*tot)/100;r.tot=Math.round(30*tot)/100}else r.tot=Math.round(100*tot)/100;
+  const clash=S.filter(s=>mk[s]?.w3r&&mk[s].w3r.team!==r.team);if(clash.length&&!confirm(`${clash.join(", ")} มีคะแนนจากทีมอื่นแล้ว จะเขียนทับหรือไม่`))return;
+  const up={};for(const s of S){up[`${s}/w3r`]=r;up[`${s}/ws/3`]=r.tot}try{await DB.ref("marks").update(up);S.forEach(s=>{mk[s]={...(mk[s]||{}),w3r:r}});toast(`บันทึก ${v2?r.raw+"/10 → ":""}${r.tot}/3 ให้ ${S.length} คนแล้ว`);w3Class()}catch(e){toast("บันทึกไม่ได้ ต้องเป็นบัญชีอาจารย์")}})}
+function w3AdmRow(op,pf){let n=0,s=0,x=0;for(const u in pf){const w=pf[u]?.w3;if(w?.sub)s++;else if(w?.at)n++;if(pf[u]?.w3x?.at)x++}
+ return`<h3 style="margin:10px 0 2px">🧩 ใบงานทีม</h3><div class="xtr"><div><b>บทที่ 3 · Workshop 4 สถานี (CleanFit → โจทย์ A/B)</b><div class="muted" style="font-size:13px">${op.w3===true?"🟢 เปิดอยู่":op.w3===false?"⚪ ปิดแล้ว (ทีมดูได้อย่างเดียว)":"ยังไม่เคยเปิด"} · ส่งแล้ว ${s} ทีม${n?` · ร่าง ${n}`:""} · เกณฑ์ 10 คะแนน → ใบงาน 3 คะแนน</div></div><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="ghost" data-gpv="w3">ทดลองทำ</button><button class="ghost" data-w3c="1">ตรวจใบงาน</button><button class="${op.w3===true?"":"pri"}" data-xo="w3">${op.w3===true?"ปิด":"เปิด"}</button></div></div>
+ <div class="xtr"><div><b>บทที่ 3 · Exit Ticket 3-2-1</b> รายบุคคล<div class="muted" style="font-size:13px">${op.w3x===true?"🟢 เปิดอยู่":op.w3x===false?"⚪ ปิดแล้ว":"ยังไม่เคยเปิด"} · ตอบแล้ว ${x} คน · สะท้อนคิด ไม่คิดคะแนน</div></div><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="ghost" data-e321pv="1">ทดลองทำ</button><button class="ghost" data-e321c="1">ดูคำตอบ</button><button class="${op.w3x===true?"":"pri"}" data-xo="w3x">${op.w3x===true?"ปิด":"เปิด"}</button></div></div>`}
+/* ---------- Exit Ticket 3-2-1 ---------- */
+const E321={};
+function e321Row(op,mine){const x=mine?.w3x;if(op?.w3x!==true&&!x?.at)return"";return`<div class="xtr"><div><b>📝 บทที่ 3 · Exit Ticket 3-2-1</b> ก่อนออกจากห้อง<div class="muted" style="font-size:13px">${x?.at?`ตอบแล้ว ${new Date(x.at).toLocaleString("th-TH")}`:"3 เครื่องมือ · 2 ความต่าง · 1 คำถาม · ประมาณ 3 นาที"}</div></div><button class="${x?.at?"":"pri"}" data-e321="1">${x?.at?(op?.w3x===true?"แก้ไข":"เปิดดู"):"เริ่มทำ"}</button></div>`}
+async function open321(pv){const u=AUTH.u;E321.pv=!!(pv&&AUTH.teacher);let d={},op=E321.pv?true:null;
+ if(!E321.pv){if(!u||!AUTH.prof?.sid){toast("เข้าสู่ระบบและยืนยันรหัสนิสิตก่อน");return}try{d=(await DB.ref(`portfolio/${u.uid}/w3x`).once("value")).val()||{};op=(await DB.ref("xt/open/w3x").once("value")).val()}catch(e){}
+  if(op!==true&&!d.at){toast("อาจารย์ยังไม่เปิด Exit Ticket 3-2-1");return}}
+ const ro=!E321.pv&&op!==true,dis=ro?" disabled":"",v=x=>esc(x??""),t=d.t||[],f=d.f||[];
+ const TOOLS=["Cynefin","สามเหลี่ยมกลับหัว","กรวยแห่งความไม่แน่นอน","ใน/นอกขอบเขต","ความต้องการที่ทดสอบได้","Product Vision","Now–Next–Later","User Story / 3C","INVEST / SPIDR","Given/When/Then","DoD","MoSCoW","Kano","WSJF","แบบฟอร์มคำขอเปลี่ยนแปลง"];
+ openSheet(`<div class="sh"><h2>📝 Exit Ticket 3-2-1 · บทที่ 3</h2><button onclick="${E321.pv?"openXtAdmin()":"openXt()"}">กลับ</button></div>
+ ${E321.pv?`<p class="note warn" style="margin:0 0 8px">โหมดทดลองของอาจารย์ · ไม่บันทึกข้อมูล</p>`:""}${ro?`<p class="note warn" style="margin:0 0 8px">อาจารย์ปิดแล้ว · ดูได้อย่างเดียว</p>`:""}
+ <h3 class="sgh">3 · เครื่องมือ 3 อย่างที่จะใช้กับโครงงานของตนเอง</h3>
+ ${[0,1,2].map(i=>`<div class="w3g2"><label><span class="lbl">เครื่องมือที่ ${i+1}</span><select class="w3in" id="e3t_${i}"${dis}><option value=""></option>${TOOLS.map(x=>`<option${t[i]?.k===x?" selected":""}>${x}</option>`).join("")}</select></label><label><span class="lbl">จะใช้ทำอะไรในโครงงาน</span><input class="w3in" id="e3u_${i}" value="${v(t[i]?.u)}"${dis}></label></div>`).join("")}
+ <h3 class="sgh">2 · ความต่าง 2 ข้อ ระหว่างขอบเขตบานปลาย กับ การทำเกินสั่ง</h3>
+ ${[0,1].map(i=>`<label><span class="lbl">ข้อที่ ${i+1}</span><textarea class="w3in" id="e3f_${i}" rows="2"${dis}>${v(f[i])}</textarea></label>`).join("")}
+ <h3 class="sgh">1 · คำถามที่ยังค้างใจ</h3><textarea class="w3in" id="e3q" rows="2"${dis}>${v(d.q)}</textarea>
+ <p class="muted" id="e3st" style="min-height:1.2em">${d.at?`ส่งแล้ว ${new Date(d.at).toLocaleString("th-TH")}`:""}</p>
+ ${ro?"":`<button class="pri big" id="bE321">${d.at?"ส่งฉบับแก้ไข":"ส่งคำตอบ"}</button>`}`);
+ $("bE321")&&($("bE321").onclick=async()=>{const g=id=>($(id)?.value||"").trim();const c={t:[0,1,2].map(i=>({k:g("e3t_"+i),u:g("e3u_"+i).slice(0,200)})),f:[0,1].map(i=>g("e3f_"+i).slice(0,400)),q:g("e3q").slice(0,400)};
+  if(c.t.filter(x=>x.k).length<3||c.f.filter(Boolean).length<2||!c.q){toast("ตอบให้ครบ 3 เครื่องมือ 2 ความต่าง และ 1 คำถาม");return}
+  if(E321.pv){toast("โหมดทดลอง · ไม่บันทึก");return}c.at=now();c.sid=AUTH.prof?.sid||"";c.name=AUTH.prof?.name||AUTH.u?.displayName||"";
+  try{await DB.ref(`portfolio/${AUTH.u.uid}/w3x`).set(c);toast("ส่ง Exit Ticket แล้ว");$("e3st").textContent=`ส่งแล้ว ${new Date(c.at).toLocaleString("th-TH")}`;$("bE321").textContent="ส่งฉบับแก้ไข"}catch(e){toast("บันทึกไม่ได้ ตรวจการเชื่อมต่ออินเทอร์เน็ต")}})}
+async function e321Class(){openSheet(`<div class="sh"><h2>📝 Exit Ticket 3-2-1</h2><button onclick="openXtAdmin()">กลับ</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);
+ let pf={},ro={};try{pf=(await DB.ref("portfolio").once("value")).val()||{};ro=(await DB.ref("rosters").once("value")).val()||{}}catch(e){toast("อ่านข้อมูลไม่ได้ ตรวจสิทธิ์อาจารย์")}
+ const L=Object.values(pf).map(x=>x?.w3x).filter(x=>x?.at&&!ro[x.sid]?.demo).sort((a,b)=>String(a.sid).localeCompare(String(b.sid)));const C={};L.forEach(x=>(x.t||[]).forEach(t=>{if(t.k)C[t.k]=(C[t.k]||0)+1}));
+ const top=Object.entries(C).sort((a,b)=>b[1]-a[1]);
+ openSheet(`<div class="sh"><h2>📝 Exit Ticket 3-2-1 (${L.length} คน)</h2><button onclick="openXtAdmin()">กลับ</button></div>
+ <div class="rpc"><h3 class="rpt">3 · เครื่องมือที่นิสิตเลือกใช้</h3>${top.length?top.map(([k,n])=>{const p=Math.round(100*n/L.length);return`<div class="lb" style="grid-template-columns:1fr 140px 44px"><span>${esc(k)}</span><div class="bar60"><i style="width:${p}%;background:var(--accent)"></i></div><span class="lbv">${n}</span></div>`}).join(""):`<p class="muted">ยังไม่มีคำตอบ</p>`}</div>
+ <div class="rpc"><h3 class="rpt">1 · คำถามที่ค้างใจ · ใช้เปิดคาบถัดไป</h3>${L.map(x=>`<div class="tbox" style="margin-bottom:4px">${esc(x.q)} <span class="muted" style="font-size:12px">— ${esc(x.sid)} ${esc(ro[x.sid]?.n||x.name||"")}</span></div>`).join("")||`<p class="muted">–</p>`}</div>
+ <details class="rpc"><summary><b>2 · ความต่างบานปลาย vs ทำเกินสั่ง (รายคน)</b></summary>${L.map(x=>`<div class="tbox" style="margin:4px 0;font-size:13px"><b>${esc(x.sid)} ${esc(ro[x.sid]?.n||x.name||"")}</b><br>1) ${esc(x.f?.[0]||"–")}<br>2) ${esc(x.f?.[1]||"–")}<div class="muted">เครื่องมือ: ${(x.t||[]).map(t=>`${esc(t.k)}${t.u?` (${esc(t.u)})`:""}`).join(" · ")}</div></div>`).join("")}</details>`)}
 
 /* ---------- chapter 3 team game: Scope Market (one device per team · portfolio/{uid}/s3 · team score 3) ---------- */
 const SM_F=[{k:"ck",n:"ลงชื่อเข้าชั้นเรียนผ่านบีคอน",c:5,v:5},{k:"rp",n:"รายงานการเข้าเรียนสำหรับอาจารย์",c:3,v:4,p:"ck"},{k:"ev",n:"แจ้งกิจกรรมเมื่อเข้าใกล้บีคอน",c:5,v:3,note:"ลดความเสี่ยง: พิสูจน์ว่าบีคอนทำงานกับ LINE"},
