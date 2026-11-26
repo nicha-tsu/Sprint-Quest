@@ -2263,9 +2263,10 @@ function renderTHome(app){const u=AUTH.u,ta=!AUTH.teacher&&AUTH.ta;NAV.back=null
   <button class="tile" id="tSet"><span class="ic">⚙️</span>ตั้งค่า<small>รายวิชา เกมรายบท ประวัติ</small></button>
   <button class="tile" id="tPv"><span class="ic">👁️</span>มุมมองนิสิต<small>เห็นและลองแบบที่นิสิตเห็น</small></button>`}
  </div>
+ ${ta?"":`<div id="tDash"></div>`}
  <p class="muted" style="font-size:13px;text-align:center;margin-top:12px">${FBOK?(CONN?"🟢 เชื่อมต่อแล้ว":`<span class="wait"></span> กำลังเชื่อมต่อ…`):"⚠️ ออฟไลน์"}</p>`;
  $("tOut").onclick=()=>signOutNow();$("tCls").onclick=()=>openClass();
- if(!ta){$("tScore").onclick=openRoster;$("tSet").onclick=openSettings;$("tPv").onclick=openStudentPreview}}
+ if(!ta){$("tScore").onclick=openRoster;$("tSet").onclick=openSettings;$("tPv").onclick=openStudentPreview;setTimeout(()=>tDash(),50)}}
 function openXtAdmin(ch){if(typeof ch!=="number")ch=undefined;if(ch===undefined&&NAV.back)return NAV.back();return openXtAdminV19(ch)}
 function openToday(sec){if(NAV.back)return NAV.back();return openClass(sec)}
 async function openRoster(){NAV.back=null;openSheet(`<div class="sh"><h2>👥 รายชื่อนิสิต</h2><button onclick="closeSheet()">ปิด</button></div><p><span class="wait"></span> กำลังโหลด…</p>`);await roLoad();await publishAll(true);roRender()}
@@ -2372,6 +2373,74 @@ async function openStudentPreview(){NAV.back=openStudentPreview;clsStop();
   if(more&&!h){h=document.createElement("div");h.className="sheet-more";h.textContent="เลื่อนลงเพื่อดูต่อ ↓";sb.appendChild(h)}if(h)h.style.opacity=more?"1":"0"};
  sb.addEventListener("scroll",upd,{passive:true});window.addEventListener("resize",upd);
  new MutationObserver(m=>{if(m.some(x=>[...x.addedNodes].some(n=>n.className!=="sheet-more")))setTimeout(upd,60)}).observe(sb,{childList:true})})();
+/* ---------- อาจารย์: แดชบอร์ดหน้าแรก (ผลประเมิน · ความก้าวหน้าตามสัดส่วน มคอ.3 · พัฒนาการรายบท · การเข้าเรียน) ---------- */
+(function(){const st=document.createElement("style");st.textContent=`
+.dash{margin-top:14px;display:grid;gap:12px}
+.dash .card{margin:0}.dash h3{margin:0 0 2px;font-size:16px}.dash .sub{color:var(--muted,#667085);font-size:12.5px;margin:0 0 10px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}@media(min-width:640px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--soft,#f5f7fa);border-radius:12px;padding:10px 12px}.kpi b{display:block;font-size:24px;line-height:1.2;font-variant-numeric:tabular-nums}.kpi small{color:var(--muted,#667085);font-size:12.5px}
+.kpi.warn b{color:#b42318}
+.tq{display:grid;grid-template-columns:118px 1fr 92px;gap:8px;align-items:center;margin:7px 0;font-size:13.5px}
+.tq .trk{position:relative;height:14px;border-radius:4px;background:#eef1f5;overflow:hidden}
+.tq .as{position:absolute;inset:0 auto 0 0;background:#cce3fd;border-radius:4px}.tq .ea{position:absolute;inset:0 auto 0 0;background:#257de0;border-radius:4px}
+.tq .v{font-variant-numeric:tabular-nums;text-align:right;color:var(--muted,#667085);font-size:12.5px}.tq .v b{color:var(--ink,#101828);font-size:13.5px}
+.lgd{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted,#667085);margin-top:6px}.lgd i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.chb{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:18px;border-bottom:1px solid #d0d5dd}
+.chb .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;min-width:0}
+.chb .cbar{width:70%;max-width:34px;background:#257de0;border-radius:4px 4px 0 0;min-height:2px}.chb .cbar.na{background:transparent;border:1px dashed #d0d5dd;border-bottom:0;height:8px}
+.chb .val{font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink,#101828);margin-bottom:2px}
+.chx{display:flex;gap:6px;margin-top:4px}.chx span{flex:1;text-align:center;font-size:11.5px;color:var(--muted,#667085)}
+.wk{display:grid;grid-template-columns:70px 1fr 40px;gap:8px;align-items:center;margin:5px 0;font-size:13px}
+.wk .stk{display:flex;gap:2px;height:16px}.wk .stk i{display:block;height:100%}.wk .stk i:first-child{border-radius:4px 0 0 4px}.wk .stk i:last-child{border-radius:0 4px 4px 0}
+.gd{display:grid;grid-template-columns:34px 1fr 28px;gap:8px;align-items:center;margin:4px 0;font-size:13px}.gd .b{height:12px;background:#257de0;border-radius:0 4px 4px 0;min-width:2px}
+.risk{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line,#eaecf0);font-size:13.5px;cursor:pointer}.risk:last-child{border-bottom:0}.risk small{color:#b42318}
+.dash-tip{cursor:default}
+`;document.head.appendChild(st)})();
+const DASH={at:0,html:""};
+const ATT_C={present:["มา","#0aac23"],late:["สาย","#fbb315"],leave:["ลา","#98a2b3"],absent:["ขาด","#dc3c3d"]};
+async function tDash(force){const el=$("tDash");if(!el||!AUTH.teacher)return;
+ if(!force&&DASH.html&&Date.now()-DASH.at<60000){el.innerHTML=DASH.html;tDashBind();return}
+ el.innerHTML=`<div class="card"><span class="wait"></span> กำลังสรุปข้อมูลห้องเรียน…</div>`;
+ let ss={},at={};try{await roLoad();const a=await Promise.all([DB.ref("sessions").once("value"),DB.ref("att").once("value")]);ss=a[0].val()||{};at=a[1].val()||{}}catch(e){el.innerHTML=`<div class="card muted">โหลดแดชบอร์ดไม่ได้</div>`;return}
+ const W=V20.W,CO=v20Course(),L=(RO.list||[]).filter(([,r])=>!r.demo),N=L.length,S=L.map(([sid,r])=>({sid,r,s:RO.S[sid]}));
+ if(!N){el.innerHTML=`<div class="dash"><div class="card muted">ยังไม่มีรายชื่อนิสิต · นำเข้าได้ที่ ⚙️ ตั้งค่า → ข้อมูลรายวิชา</div></div>`;return}
+ const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null,f1=x=>x==null?"–":(Math.round(x*10)/10).toString();
+ const pcts=S.map(x=>x.s.pct).filter(x=>x!=null),avgPct=avg(pcts),bound=L.filter(([,r])=>r.uid).length;
+ /* การเข้าเรียน */
+ const closed=Object.entries(ss).filter(([,x])=>x.state==="closed").sort((a,b)=>a[1].wk-b[1].wk||String(a[1].sec).localeCompare(String(b[1].sec)));
+ const wkRows=closed.map(([id,x])=>{const n={present:0,late:0,leave:0,absent:0};let none=0;for(const [sid,r] of L){if(v20Sec(r,CO)!==x.sec)continue;const s=at?.[id]?.[sid]?.st;if(s&&n[s]!=null)n[s]++;else none++}n.absent+=none;return{x,n,t:n.present+n.late+n.leave+n.absent}});
+ const attOk=wkRows.reduce((a,w)=>a+w.n.present+w.n.late,0),attAll=wkRows.reduce((a,w)=>a+w.n.present+w.n.late+w.n.absent,0),attPct=attAll?100*attOk/attAll:null;
+ /* นิสิตที่ควรติดตาม */
+ const risk=S.map(x=>{const why=[];const g=x.s.pct==null?null:gradeOf(x.s.pct);if(x.s.pct!=null&&["D+","D","F"].includes(g))why.push(`ร้อยละ ${f1(x.s.pct)}%`);const ab=x.s.att?.n?.absent||0;if(x.s.att?.warn)why.push(`ขาดเรียน ${ab} ครั้ง`);if(!x.r.uid)why.push("ยังไม่ผูกบัญชี");return{...x,why,ab}}).filter(x=>x.why.length).sort((a,b)=>(a.s.pct??999)-(b.s.pct??999));
+ /* สัดส่วน มคอ.3 */
+ const comp=[["al","Active Learning",W.al],["fin","สอบปลายภาค",W.fin],["cap","Capstone Project",W.cap],["att","การเข้าเรียน",W.att],["live","กิจกรรมในคาบ",W.live]].map(([k,n,w])=>{let pos=0;const ea=[];
+  for(const x of S){let e=null,p=0;if(k==="al"){[e,p]=x.s.al;if(!p)e=null}else if(k==="att"){if(x.s.oth?.att!=null){e=x.s.oth.att;p=w}}else if(x.s.oth?.[k]!=null){e=x.s.oth[k];p=w}if(e!=null){ea.push(e);pos=Math.max(pos,p)}}
+  return{k,n,w,pos,e:avg(ea),cnt:ea.length}});
+ /* พัฒนาการรายบท */
+ const chs=Object.keys(CH_T).map(Number).map(c=>{const v=S.map(x=>x.s.ch?.[c]?.s).filter(v=>v!=null);return{c,a:avg(v),n:v.length,low:v.filter(x=>x<5).length}});
+ /* ผลการประเมิน (เกรดตามคะแนนที่เก็บแล้ว) */
+ const gd=GRADE.map(([,g])=>[g,S.filter(x=>x.s.pct!=null&&gradeOf(x.s.pct)===g).length]),gmax=Math.max(1,...gd.map(g=>g[1]));
+ const tqRow=c=>{const asw=c.w?100*c.pos/c.w:0,eaw=c.w&&c.e!=null?100*c.e/c.w:0;return`<div class="tq dash-tip" title="${esc(c.n)} ${c.w}%: ประเมินแล้ว ${f1(c.pos)} · เฉลี่ยห้อง ${f1(c.e)} (${c.cnt} คน)"><span>${esc(c.n)} <span class="muted">${c.w}%</span></span><div class="trk"><div class="as" style="width:${asw}%"></div><div class="ea" style="width:${eaw}%"></div></div><span class="v">${c.e==null?"ยังไม่ประเมิน":`<b>${f1(c.e)}</b> / ${f1(c.pos)}`}</span></div>`};
+ const done=comp.reduce((a,c)=>a+c.pos,0),earnedAvg=comp.reduce((a,c)=>a+(c.e||0),0);
+ const html=`<div class="dash">
+ <div class="card"><div class="cls-h"><h3>📈 ภาพรวมห้องเรียน</h3><button class="ghost" id="dashRef" style="min-height:32px;padding:4px 10px">↻ อัปเดต</button></div><p class="sub">ข้อมูล ณ ${new Date().toLocaleString("th-TH",{dateStyle:"medium",timeStyle:"short"})} · ร้อยละคิดจากคะแนนที่ประเมินแล้วเท่านั้น</p>
+ <div class="kpis"><div class="kpi"><b>${N}</b><small>นิสิต · ผูกบัญชีแล้ว ${bound}</small></div><div class="kpi"><b>${avgPct==null?"–":f1(avgPct)+"%"}</b><small>ร้อยละเฉลี่ยของห้อง</small></div>
+ <div class="kpi"><b>${attPct==null?"–":f1(attPct)+"%"}</b><small>การเข้าเรียน (มา+สาย) · ${wkRows.length} คาบ</small></div><div class="kpi${risk.length?" warn":""}"><b>${risk.length}</b><small>นิสิตที่ควรติดตาม</small></div></div></div>
+ <div class="card"><h3>🎯 ความก้าวหน้าตามสัดส่วน มคอ.3</h3><p class="sub">ประเมินแล้ว ${f1(done)} จาก 100 คะแนน · ห้องได้เฉลี่ย ${f1(earnedAvg)} คะแนน</p>${comp.map(tqRow).join("")}
+ <div class="lgd"><span><i style="background:#257de0"></i>คะแนนเฉลี่ยของห้อง</span><span><i style="background:#cce3fd"></i>ส่วนที่ประเมินแล้ว</span><span><i style="background:#eef1f5"></i>ยังไม่ประเมิน</span></div></div>
+ <div class="card"><h3>🌱 พัฒนาการรายบท</h3><p class="sub">คะแนนเฉลี่ยของห้องต่อบท (เต็ม 10) · แตะแท่งเพื่อดูจำนวนนิสิตที่ได้ต่ำกว่า 5</p>
+ <div class="chb">${chs.map(x=>x.a==null?`<div class="c" title="บทที่ ${x.c} ยังไม่มีคะแนน"><div class="cbar na"></div></div>`:`<div class="c dash-tip" title="บทที่ ${x.c}: เฉลี่ย ${f1(x.a)}/10 · ${x.n} คน · ต่ำกว่า 5 = ${x.low} คน"><span class="val">${f1(x.a)}</span><div class="cbar" style="height:${Math.max(2,Math.round(x.a*11))}px"></div></div>`).join("")}</div>
+ <div class="chx">${chs.map(x=>`<span>${x.c}</span>`).join("")}</div>${(()=>{const low=chs.filter(x=>x.low);return low.length?`<p class="sub" style="margin:8px 0 0">ต่ำกว่า 5/10: ${low.map(x=>`บท ${x.c} ${x.low} คน`).join(" · ")}</p>`:""})()}</div>
+ <div class="card"><h3>🏫 ภาพรวมการเข้าเรียน</h3><p class="sub">${wkRows.length?"แต่ละคาบที่ปิดแล้ว (คนที่ไม่ได้เช็คชื่อนับเป็นขาด)":"ยังไม่มีคาบที่ปิดแล้ว"}</p>
+ ${wkRows.map(w=>`<div class="wk dash-tip" title="สัปดาห์ ${w.x.wk} บทที่ ${w.x.ch}: ${Object.entries(ATT_C).map(([k,[n]])=>`${n} ${w.n[k]}`).join(" · ")}"><span>สัปดาห์ ${w.x.wk}</span><div class="stk">${Object.entries(ATT_C).filter(([k])=>w.n[k]).map(([k,[,c]])=>`<i style="width:${100*w.n[k]/Math.max(1,w.t)}%;background:${c}"></i>`).join("")}</div><span class="muted" style="font-size:12px;text-align:right">${w.n.present+w.n.late}/${w.t}</span></div>`).join("")}
+ ${wkRows.length?`<div class="lgd">${Object.values(ATT_C).map(([n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("")}</div>`:""}</div>
+ <div class="card"><h3>📊 ผลการประเมิน</h3><p class="sub">การกระจายเกรดจากคะแนนที่เก็บแล้ว (นิสิตเห็นเป็นร้อยละ ไม่เห็นเกรด)</p>
+ ${gd.map(([g,n])=>`<div class="gd dash-tip" title="${g}: ${n} คน"><b>${g}</b><div><div class="b" style="width:${100*n/gmax}%"></div></div><span class="muted">${n}</span></div>`).join("")}</div>
+ <div class="card"><h3>🔎 นิสิตที่ควรติดตาม</h3><p class="sub">ร้อยละอยู่ในช่วง D+ ลงไป · ขาดเรียนเกินเกณฑ์ · ยังไม่ผูกบัญชี · แตะชื่อเพื่อดูรายงานรายคน</p>
+ ${risk.length?risk.slice(0,12).map(x=>`<div class="risk" data-rk="${esc(x.sid)}"><span><b>${esc(x.r.n||x.sid)}</b> <span class="muted">${esc(x.sid)}</span></span><small>${esc(x.why.join(" · "))}</small></div>`).join("")+(risk.length>12?`<p class="sub" style="margin:6px 0 0">และอีก ${risk.length-12} คน · ดูทั้งหมดใน 📊 คะแนน</p>`:""):`<p class="muted" style="margin:0">ไม่มีนิสิตที่เข้าเกณฑ์ต้องติดตาม 🎉</p>`}</div>
+ </div>`;
+ DASH.at=Date.now();DASH.html=html;if($("tDash")){$("tDash").innerHTML=html;tDashBind()}}
+function tDashBind(){$("dashRef")&&($("dashRef").onclick=()=>tDash(true));document.querySelectorAll("[data-rk]").forEach(a=>a.onclick=()=>{NAV.back=null;rpRender(rpCtxTeacher(a.dataset.rk))})}
 
 /* ---------- chapter 3 team game: Scope Market (one device per team · portfolio/{uid}/s3 · team score 3) ---------- */
 const SM_F=[{k:"ck",n:"ลงชื่อเข้าชั้นเรียนผ่านบีคอน",c:5,v:5},{k:"rp",n:"รายงานการเข้าเรียนสำหรับอาจารย์",c:3,v:4,p:"ck"},{k:"ev",n:"แจ้งกิจกรรมเมื่อเข้าใกล้บีคอน",c:5,v:3,note:"ลดความเสี่ยง: พิสูจน์ว่าบีคอนทำงานกับ LINE"},
